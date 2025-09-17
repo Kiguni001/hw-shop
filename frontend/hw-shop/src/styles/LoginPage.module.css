@@ -1,0 +1,104 @@
+/* src/pages/LoginPage/LoginPage.module.css */
+
+.loginPageContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #6dd5ed, #2193b0); /* พื้นหลังไล่เฉดสี */
+  font-family: "Arial", sans-serif;
+}
+
+.loginBox {
+  background-color: #ffffff;
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* เงาให้ดูมีมิติ */
+  text-align: center;
+  width: 100%;
+  max-width: 400px;
+}
+
+.title {
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.errorMessage {
+  color: #e74c3c;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.loginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* ระยะห่างระหว่าง input group */
+}
+
+.inputGroup {
+  text-align: left;
+}
+
+.inputGroup label {
+  display: block;
+  margin-bottom: 8px;
+  color: #555;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.inputField {
+  width: calc(100% - 20px); /* ลบ padding ออก */
+  padding: 12px 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+  color: #333;
+  transition: border-color 0.3s ease;
+}
+
+.inputField:focus {
+  border-color: #2193b0; /* สีเส้นขอบเมื่อ focus */
+  outline: none;
+  box-shadow: 0 0 5px rgba(33, 147, 176, 0.3);
+}
+
+.loginButton {
+  background-color: #2193b0; /* สีปุ่มหลัก */
+  color: white;
+  padding: 15px;
+  border: none;
+  border-radius: 5px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.loginButton:hover {
+  background-color: #1a7a92; /* สีเข้มขึ้นเมื่อ hover */
+  transform: translateY(-2px); /* ยกปุ่มขึ้นเล็กน้อย */
+}
+
+.loginButton:active {
+  transform: translateY(0); /* กลับมาตำแหน่งเดิมเมื่อกด */
+}
+
+.footerText {
+  margin-top: 25px;
+  color: #777;
+  font-size: 14px;
+}
+
+.link {
+  color: #2193b0;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.link:hover {
+  text-decoration: underline;
+}

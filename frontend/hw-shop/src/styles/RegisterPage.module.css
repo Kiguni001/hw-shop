@@ -1,0 +1,105 @@
+/* src/styles/RegisterPage.module.css */
+
+.registerPageContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f4f8, #d9e2ec); /* พื้นหลังไล่เฉดสีอ่อนๆ */
+  font-family: 'Arial', sans-serif;
+}
+
+.registerBox {
+  background-color: #ffffff;
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* เงาให้ดูมีมิติ */
+  text-align: center;
+  width: 100%;
+  max-width: 500px;
+}
+
+.title {
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.errorMessage {
+  color: #e74c3c;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.registerForm {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* ระยะห่างระหว่าง input group */
+}
+
+.inputGroup {
+  text-align: left;
+}
+
+.inputGroup label {
+  display: block;
+  margin-bottom: 8px;
+  color: #555;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.inputField {
+  width: calc(100% - 20px);
+  padding: 12px 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+  color: #333;
+  transition: border-color 0.3s ease;
+  background-color: #f7f9fc; /* พื้นหลังช่อง input */
+}
+
+.inputField:focus {
+  border-color: #3498db; /* สีเส้นขอบเมื่อ focus */
+  outline: none;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+.registerButton {
+  background-color: #3498db; /* สีปุ่มหลัก */
+  color: white;
+  padding: 15px;
+  border: none;
+  border-radius: 5px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.registerButton:hover {
+  background-color: #2980b9; /* สีเข้มขึ้นเมื่อ hover */
+  transform: translateY(-2px); /* ยกปุ่มขึ้นเล็กน้อย */
+}
+
+.registerButton:active {
+  transform: translateY(0); /* กลับมาตำแหน่งเดิมเมื่อกด */
+}
+
+.footerText {
+  margin-top: 25px;
+  color: #777;
+  font-size: 14px;
+}
+
+.link {
+  color: #3498db;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.link:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,152 @@
+/* SearchBar.module.css (แทนที่ไฟล์เก่า) */
+
+.searchContainerKid {
+  max-width: 32%;
+}
+
+.searchContainer {
+  align-items: center;
+  gap: 16px; /* ระยะระหว่าง search zone กับปุ่ม/ข้อความ */
+  padding: 0 2.4% 0 2%;
+  width: 100%;
+  box-sizing: border-box;
+  padding-top: 1%;
+}
+
+/* โซนซ้าย: กล่องค้นหา */
+.searchZone1 {
+  flex: 0 1 420px; /* ขยาย/หดได้ แต่ไม่เกิน 420px โดยรวม */
+  padding: 10px 0;
+}
+
+/* กล่องค้นหาแบบกลม */
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #000; /* เส้นขอบดำ ตามที่ต้องการ */
+  border-radius: 50px; /* มุมกลมสุด */
+  background-color: #fff;
+  padding: 6px 8px; /* ระยะภายในกล่อง */
+  height: 48px; /* ความสูงคงที่ เหมือนภาพ */
+  box-sizing: border-box;
+}
+
+/* พื้นที่ข้อความให้ขยายได้เต็ม */
+.textBox {
+  flex: 1 1 auto;
+  min-width: 0; /* สำคัญมากกัน input ดันออกนอก container */
+  font-size: 16px;
+}
+
+/* input กินพื้นที่เต็มและไม่มีขอบ */
+.textBox input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 8px 20px;
+  box-sizing: border-box;
+}
+
+.textBox input::placeholder {
+  color: #aaa;
+}
+
+/* พื้นที่ไอคอน (จะชิดขวาของ .searchBox) */
+.searchIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* ไม่กำหนด width เป็น % อีกต่อไป เพื่อให้ชิดขอบได้จริง */
+  margin-left: 0;
+}
+
+/* ปุ่มไอคอนกลมขนาดกำหนด */
+.searchBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.searchBtn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* ขนาดไอคอนแบบคงที่ (ไม่ใช้ % เพื่อความนิ่ง) */
+.icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+/* โซนขวา: ปุ่ม Brand / ข้อความ / ปุ่มบันทึก */
+.searchZone2 {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* ระยะห่างระหว่าง brandBtn กับ itemCount */
+  width: 100%; /* ให้กินเต็มบรรทัด */
+}
+
+.brandBtn {
+  background: #999999;
+  color: #fff;
+  border: 1px #000000;
+  border-radius: 40px;
+  padding: 0.8% 0;
+  cursor: pointer;
+  font-size: 16px;
+  white-space: nowrap;
+  width: 14%;
+}
+
+.itemCount {
+  font-size: 16px;
+  color: #333;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+/* ปุ่มบันทึกที่เป็นสีส้ม (ชิดขวาสุด) */
+.saveBtn {
+  background: #eb5202;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 16px;
+  white-space: nowrap;
+  margin-left: auto;
+  width: 11%;
+  padding: 0.8% 0;
+  border-radius: 50px;
+  color: #ffffff;
+}
+
+/* ปรับขนาดบนหน้าจอเล็ก */
+@media (max-width: 640px) {
+  .searchContainer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .searchZone1 {
+    flex: 1 1 auto;
+  }
+  .searchZone2 {
+    justify-content: flex-start;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .saveBtn {
+    margin-left: 0;
+  }
+}
