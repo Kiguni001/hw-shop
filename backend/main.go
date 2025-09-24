@@ -1,43 +1,26 @@
 package main
 
 import (
-	"log"
-	"os"
+	"github.com/gin-gonic/gin"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 
-	"Kiguni001/hw-shop/database"
-	"Kiguni001/hw-shop/routes"
-
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/joho/godotenv"
+	"backend/models"
+	"backend/routes"
 )
 
 func main() {
-	// โหลดไฟล์ .env (ถ้ามี)
-	if os.Getenv("DATABASE_URL") == "" {
-		err := godotenv.Load()
-		if err != nil {
-			log.Println("⚠️  Error loading .env file")
-		}
+	dsn := "host=localhost user=postgres password=postgres dbname=tiredb port=5432 sslmode=disable"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
 	}
 
-	// เชื่อมต่อฐานข้อมูล + migrate
-	database.ConnectDB()
-	database.Migrate()
+	// Auto migrate tables
+	db.AutoMigrate(&models.UserTire{}, &models.MainTire{})
 
-	// สร้าง Fiber app
-	app := fiber.New()
+	r := gin.Default()
+	routes.RegisterRoutes(r, db)
 
-	// เปิด CORS ให้ frontend เรียกได้
-	app.Use(cors.New())
-
-	// Setup routes ที่ใช้งานจริง
-	routes.SetupRoutes(app)
-	routes.SetupCompanyRoutes(app)
-	// routes.SetupTireRoutes(app)          // ถ้ายังไม่ได้ใช้ ลบออกก่อน
-	// routes.SetupCompanyTireRoutes(app)   // ถ้ายังไม่ได้ใช้ ลบออกก่อน
-	// routes.RegisterAdminRoutes(app)      // ถ้ายังไม่ได้ใช้ ลบออกก่อน
-
-	// เริ่มเซิร์ฟเวอร์
-	log.Fatal(app.Listen(":3001"))
+	r.Run(":8080")
 }

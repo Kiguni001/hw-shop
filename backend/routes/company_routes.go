@@ -1,14 +1,16 @@
 package routes
 
 import (
-	"Kiguni001/hw-shop/handlers"
-
-	"github.com/gofiber/fiber/v2"
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"hw-shop/backend/handlers"
 )
 
-func SetupCompanyRoutes(app *fiber.App) {
-	api := app.Group("/api")
+func RegisterCompanyRoutes(r *gin.Engine, db *gorm.DB) {
+	handler := &handlers.CompanyHandler{DB: db}
 
-	api.Post("/companies", handlers.CreateCompany)
-	api.Get("/companies", handlers.GetCompanies)
+	group := r.Group("/companies")
+	{
+		group.POST("/", handler.CreateCompany)
+	}
 }

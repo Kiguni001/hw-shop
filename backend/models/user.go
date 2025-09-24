@@ -1,21 +1,12 @@
-// models/user.go
 package models
 
-import "time"
-
 type User struct {
-	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-	FirstName    string    `gorm:"not null" json:"first_name"`
-	LastName     string    `json:"last_name"`
-	PhoneNumber  string    `json:"phone_number"`
-	PasswordHash string    `gorm:"not null" json:"password_hash"`
-	Position     string    `json:"position"`
-	Role         string    `json:"role"`
-
-	// Foreign key → ผูกกับ Company
-	CompanyID uint    `json:"company_id"`
-	Company   Company `gorm:"foreignKey:CompanyID" json:"company"`
-
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        uint   `json:"id" gorm:"primaryKey"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Phone     string `json:"phone"`
+	Password  string `json:"password"`
+	Position  string `json:"position"`
+	Role      string `json:"role"`    // admin / user
+	TcpsID    string `json:"tcps_id"` // company ref
 }
