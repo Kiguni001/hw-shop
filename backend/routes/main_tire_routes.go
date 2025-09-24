@@ -1,17 +1,15 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-	"hw-shop/backend/handlers"
+	"Kiguni001/hw-shop/handlers"
+	"github.com/gofiber/fiber/v2"
 )
 
-func RegisterMainTireRoutes(r *gin.Engine, db *gorm.DB) {
-	handler := &handlers.MainTireHandler{DB: db}
+func SetupMainTireRoutes(app *fiber.App) {
+	admin := app.Group("/api/admin") // เฉพาะ admin
 
-	group := r.Group("/main_tires")
-	{
-		group.GET("/", handler.GetMainTires)     // Admin ดึงข้อมูล
-		group.PUT("/:id", handler.UpdateMainTire) // Admin อัพเดทยาง
-	}
+	admin.Get("/main_tires", handlers.GetMainTires)
+	admin.Post("/main_tires", handlers.CreateMainTire)
+	admin.Put("/main_tires/:id", handlers.UpdateMainTire)
+	admin.Delete("/main_tires/:id", handlers.DeleteMainTire)
 }

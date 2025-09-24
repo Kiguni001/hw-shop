@@ -1,98 +1,89 @@
 package handlers
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"net/http"
 	"time"
+	"Kiguni001/hw-shop/database"
+	"Kiguni001/hw-shop/models"
+	"Kiguni001/hw-shop/services"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-
-	"hw-shop/backend/models"
+	"github.com/gofiber/fiber/v2"
 )
 
-type CompanyHandler struct {
-	DB *gorm.DB
-}
-
-type CreateCompanyInput struct {
-	Name      string `json:"name"`
-	TcpsUbID  string `json:"tcps_ub_id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Phone     string `json:"phone"`
-	Password  string `json:"password"`
-	Position  string `json:"position"`
-}
-
-// ✅ สร้างบริษัทใหม่
-func (h *CompanyHandler) CreateCompany(c *gin.Context) {
-	var input CreateCompanyInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON"})
-		return
+func CreateCompany(c *fiber.Ctx) error {
+	type Input struct {
+		Name       string `json:"name"`
+		TcpsUbID   string `json:"tcps_ub_id"`
+		Users      []struct {
+			FirstName string `json:"first_name"`
+			LastName  string `json:"last_name"`
+			Phone     string `json:"phone"`
+			Password  string `json:"password"`
+			Position  string `json:"position"`
+		} `json:"users"`
 	}
 
-	// --- เช็คชื่อบริษัทไม่ให้ซ้ำ ---
-	var existing models.Company
-	if err := h.DB.Where("name = ?", input.Name).First(&existing).Error; err == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "company name already exists"})
-		return
+	var input Input
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid input"})
 	}
 
-	// --- สร้างบริษัท ---
-	company := models.Company{Name: input.Name, TcpsUbID: input.TcpsUbID}
-	if err := h.DB.Create(&company).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	// ตรวจชื่อบริษัทซ้ำ
+	var count int64
+	database.DB.Model(&models.Company{}).Where("name = ?", input.Name).Count(&count)
+	if count > 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "company already exists"})
 	}
 
-	// --- สร้าง user แรกของบริษัท ---
-	user := models.User{
-		FirstName: input.FirstName,
-		LastName:  input.LastName,
-		Phone:     input.Phone,
-		Password:  input.Password,
-		Position:  input.Position,
-		Role:      "user",
-		TcpsID:    input.TcpsUbID,
+	// สร้างบริษัท
+	company := models.Company{
+		Name:   input.Name,
+		TcpsID: input.TcpsUbID,
 	}
-	if err := h.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	database.DB.Create(&company)
+
+	// สร้าง user
+	for _, u := range input.Users {
+		user := models.User{
+			FirstName: u.FirstName,
+			LastName:  u.LastName,
+			Phone:     u.Phone,
+			Password:  u.Password,
+			Position:  u.Position,
+			Role:      "user",
+			TcpsID:    input.TcpsUbID,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+		database.DB.Create(&user)
 	}
 
-	// --- ดึงข้อมูล user_tire จาก API ---
-	apiURL := "http://192.168.1.249/hongwei/api/webapp_customer/check_listcode_price"
-	resp, err := http.Get(apiURL)
+	// Clone data จาก API
+	apiTires, err := services.FetchPriceList(input.TcpsUbID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "API request failed"})
-		return
-	}
-	defer resp.Body.Close()
-
-	body, _ := ioutil.ReadAll(resp.Body)
-	var apiData []models.UserTire
-	if err := json.Unmarshal(body, &apiData); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to parse API response"})
-		return
+		return c.Status(500).JSON(fiber.Map{"error": "failed to fetch API data"})
 	}
 
-	// --- filter เฉพาะ tcps_ub_id ที่ตรง ---
-	var tires []models.UserTire
-	for _, t := range apiData {
-		if t.TcpsUbID == input.TcpsUbID {
-			t.UpdatedAt = time.Now()
-			tires = append(tires, t)
+	for _, t := range apiTires {
+		userTire := models.UserTire{
+			TcpsUbID:         t.TcpsUbID,
+			TcpsTbName:       t.TcpsTbName,
+			TcpsTbiName:      t.TcpsTbiName,
+			TcpsSidewallName: t.TcpsSidewallName,
+			TcpsPriceR13:     t.TcpsPriceR13,
+			TcpsPriceR14:     t.TcpsPriceR14,
+			TcpsPriceR15:     t.TcpsPriceR15,
+			TcpsPriceR16:     t.TcpsPriceR16,
+			TcpsPriceR17:     t.TcpsPriceR17,
+			TcpsPriceR18:     t.TcpsPriceR18,
+			TcpsPriceR19:     t.TcpsPriceR19,
+			TcpsPriceR20:     t.TcpsPriceR20,
+			TcpsPriceR21:     t.TcpsPriceR21,
+			TcpsPriceR22:     t.TcpsPriceR22,
+			TcpsPriceTradeIn: t.TcpsPriceTradeIn,
+			UpdatedAt:        time.Now(),
 		}
-	}
-	if len(tires) > 0 {
-		if err := h.DB.Create(&tires).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+		database.DB.Create(&userTire)
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "company created", "company": company, "user": user})
+	return c.JSON(fiber.Map{"message": "company and users created"})
 }

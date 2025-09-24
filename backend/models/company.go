@@ -1,7 +1,11 @@
 package models
 
+import "time"
+
 type Company struct {
-	ID       uint   `json:"id" gorm:"primaryKey"`
-	Name     string `json:"name" gorm:"unique"`
-	TcpsUbID string `json:"tcps_ub_id" gorm:"unique"`
+	ID     uint   `json:"id" gorm:"primaryKey"`
+	Name   string `json:"name"`
+	TcpsID string `json:"tcps_id"` // company identifier
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

@@ -1,179 +1,137 @@
 package handlers
 
 import (
-	"bytes"
-	"encoding/json"
-	"io/ioutil"
-	"net/http"
 	"time"
+	"Kiguni001/hw-shop/database"
+	"Kiguni001/hw-shop/models"
+	"Kiguni001/hw-shop/services"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-	"hw-shop/backend/models"
+	"github.com/gofiber/fiber/v2"
 )
 
-type UserTireHandler struct {
-	DB *gorm.DB
-}
+// ดึง user_tire ของ user
+func GetUserTires(c *fiber.Ctx) error {
+	sess, _ := Store.Get(c)
+	tcpsID := sess.Get("tcps_id").(string)
 
-// ✅ ดึงข้อมูล user_tire ของ user ตาม tcps_ub_id
-func (h *UserTireHandler) GetUserTires(c *gin.Context) {
-	tcpsUbID := c.Param("tcps_ub_id")
 	var tires []models.UserTire
-	if err := h.DB.Where("tcps_ub_id = ?", tcpsUbID).Find(&tires).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, tires)
+	database.DB.Where("tcps_ub_id = ?", tcpsID).Find(&tires)
+
+	return c.JSON(fiber.Map{"data": tires})
 }
 
-// ✅ อัปเดตราคาทั้งก้อน (validate ตาม main_tire + ส่ง API)
-func (h *UserTireHandler) UpdateUserTires(c *gin.Context) {
-	tcpsUbID := c.Param("tcps_ub_id")
-var input []models.UserTire
-if err := c.ShouldBindJSON(&input); err != nil {
-	c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON"})
-	return
-}
+// Update ราคาทั้งก้อน
+func UpdateUserTires(c *fiber.Ctx) error {
+	sess, _ := Store.Get(c)
+	tcpsID := sess.Get("tcps_id").(string)
 
-// filter เฉพาะ tcpsUbID ของ user
-var filtered []models.UserTire
-for _, t := range input {
-	if t.TcpsUbID == tcpsUbID {
-		filtered = append(filtered, t)
-	}
-}
-
-// ใช้ filtered ต่อไป
-var invalidRows []map[string]interface{}
-for _, t := range filtered {
-	var ref models.MainTire
-	err := h.DB.Where("tcps_tb_name = ? AND tcps_tbi_name = ? AND tcps_sidewall_name = ?",
-		t.TcpsTbName, t.TcpsTbiName, t.TcpsSidewallName).First(&ref).Error
-	if err != nil {
-		invalidRows = append(invalidRows, map[string]interface{}{
-			"tire":   t,
-			"reason": "reference not found",
-		})
-		continue
+	var input []models.UserTire
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid input"})
 	}
 
-		// ตรวจสอบทุกช่อง R13-R22 + trade_in
-		priceFields := map[string]float64{
-			"R13":       t.TcpsPriceR13,
-			"R14":       t.TcpsPriceR14,
-			"R15":       t.TcpsPriceR15,
-			"R16":       t.TcpsPriceR16,
-			"R17":       t.TcpsPriceR17,
-			"R18":       t.TcpsPriceR18,
-			"R19":       t.TcpsPriceR19,
-			"R20":       t.TcpsPriceR20,
-			"R21":       t.TcpsPriceR21,
-			"R22":       t.TcpsPriceR22,
-			"TradeIn":   t.TcpsPriceTradeIn,
-		}
-		refFields := map[string]float64{
-			"R13":       ref.TcpsPriceR13,
-			"R14":       ref.TcpsPriceR14,
-			"R15":       ref.TcpsPriceR15,
-			"R16":       ref.TcpsPriceR16,
-			"R17":       ref.TcpsPriceR17,
-			"R18":       ref.TcpsPriceR18,
-			"R19":       ref.TcpsPriceR19,
-			"R20":       ref.TcpsPriceR20,
-			"R21":       ref.TcpsPriceR21,
-			"R22":       ref.TcpsPriceR22,
-			"TradeIn":   ref.TcpsPriceTradeIn,
-		}
+	// ดึง main_tire ทั้งหมด
+	var mainTires []models.MainTire
+	database.DB.Find(&mainTires)
 
-		for field, value := range priceFields {
-			if value < refFields[field] || value >= 5000 {
-				invalidRows = append(invalidRows, map[string]interface{}{
-					"tire":   t,
-					"field":  field,
-					"reason": "invalid price",
-				})
+	// Validate และ mark
+	for i, row := range input {
+		for _, m := range mainTires {
+						if m.TcpsTbName == row.TcpsTbName && m.TcpsTbiName == row.TcpsTbiName && m.TcpsSidewallName == row.TcpsSidewallName {
+				// ตรวจสอบราคาตาม main_tire
+				if row.TcpsPriceR13 < m.TcpsPriceR13 || row.TcpsPriceR13 >= 5000 {
+					row.TcpsPriceR13 = -1 // ทำเครื่องหมายไม่ผ่าน validation
+				}
+				if row.TcpsPriceR14 < m.TcpsPriceR14 || row.TcpsPriceR14 >= 5000 {
+					row.TcpsPriceR14 = -1
+				}
+				if row.TcpsPriceR15 < m.TcpsPriceR15 || row.TcpsPriceR15 >= 5000 {
+					row.TcpsPriceR15 = -1
+				}
+				if row.TcpsPriceR16 < m.TcpsPriceR16 || row.TcpsPriceR16 >= 5000 {
+					row.TcpsPriceR16 = -1
+				}
+				if row.TcpsPriceR17 < m.TcpsPriceR17 || row.TcpsPriceR17 >= 5000 {
+					row.TcpsPriceR17 = -1
+				}
+				if row.TcpsPriceR18 < m.TcpsPriceR18 || row.TcpsPriceR18 >= 5000 {
+					row.TcpsPriceR18 = -1
+				}
+				if row.TcpsPriceR19 < m.TcpsPriceR19 || row.TcpsPriceR19 >= 5000 {
+					row.TcpsPriceR19 = -1
+				}
+				if row.TcpsPriceR20 < m.TcpsPriceR20 || row.TcpsPriceR20 >= 5000 {
+					row.TcpsPriceR20 = -1
+				}
+				if row.TcpsPriceR21 < m.TcpsPriceR21 || row.TcpsPriceR21 >= 5000 {
+					row.TcpsPriceR21 = -1
+				}
+				if row.TcpsPriceR22 < m.TcpsPriceR22 || row.TcpsPriceR22 >= 5000 {
+					row.TcpsPriceR22 = -1
+				}
+				if row.TcpsPriceTradeIn < m.TcpsPriceTradeIn || row.TcpsPriceTradeIn >= 5000 {
+					row.TcpsPriceTradeIn = -1
+				}
 			}
 		}
+		input[i] = row
 	}
 
-	if len(invalidRows) > 0 {
-		// ส่งกลับให้ frontend highlight สีแดง
-		c.JSON(http.StatusBadRequest, gin.H{"invalid": invalidRows})
-		return
-	}
-
-	// --- ส่งข้อมูลทั้งหมดไป API update ---
-	apiURL := "http://192.168.1.249/hongwei/api/webapp_customer/update_listcode_price"
-	jsonData, _ := json.Marshal(input)
-
-	resp, err := http.Post(apiURL, "application/json", bytes.NewBuffer(jsonData))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "API request failed"})
-		return
-	}
-	defer resp.Body.Close()
-
-	body, _ := ioutil.ReadAll(resp.Body)
-	if resp.StatusCode != http.StatusOK {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "API rejected", "response": string(body)})
-		return
-	}
-
-	// --- API ส่งราคาล่าสุดกลับมา → update DB ---
-	var updated []models.UserTire
-	if err := json.Unmarshal(body, &updated); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to parse API response"})
-		return
-	}
-
-	for _, t := range updated {
-		t.UpdatedAt = time.Now()
-		h.DB.Model(&models.UserTire{}).Where("id = ?", t.ID).Updates(t)
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "updated successfully", "data": updated})
-}
-
-// ✅ Sync ตอน user เข้า Home / refresh หน้า
-func (h *UserTireHandler) SyncUserTires(c *gin.Context) {
-	tcpsUbID := c.Param("tcps_ub_id")
-
-	// ดึงข้อมูลจาก API
-	apiURL := "http://192.168.1.249/hongwei/api/webapp_customer/check_listcode_price"
-	resp, err := http.Get(apiURL)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "API request failed"})
-		return
-	}
-	defer resp.Body.Close()
-
-	body, _ := ioutil.ReadAll(resp.Body)
-	var apiData []models.UserTire
-	if err := json.Unmarshal(body, &apiData); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to parse API"})
-		return
-	}
-
-	// filter เฉพาะ tcps_ub_id ของ user
-	var filtered []models.UserTire
-	for _, t := range apiData {
-		if t.TcpsUbID == tcpsUbID {
-			t.UpdatedAt = time.Now()
-			filtered = append(filtered, t)
+	// ตรวจสอบว่า validation ผ่านหรือไม่
+	for _, r := range input {
+		if r.TcpsPriceR13 == -1 || r.TcpsPriceR14 == -1 || r.TcpsPriceR15 == -1 || r.TcpsPriceR16 == -1 ||
+			r.TcpsPriceR17 == -1 || r.TcpsPriceR18 == -1 || r.TcpsPriceR19 == -1 || r.TcpsPriceR20 == -1 ||
+			r.TcpsPriceR21 == -1 || r.TcpsPriceR22 == -1 || r.TcpsPriceTradeIn == -1 {
+			// mark cell ที่ไม่ผ่านเป็นสีแดงใน frontend (user จะเห็น JSON หรือ frontend จะ render)
+			return c.Status(400).JSON(fiber.Map{"error": "validation failed", "data": input})
 		}
 	}
 
-	// update DB (insert/update) ให้ตรงกับ API
-for _, t := range filtered {
-	h.DB.Clauses(
-		clause.OnConflict{
-			Columns:   []clause.Column{{Name: "tcps_tb_name"}, {Name: "tcps_tbi_name"}, {Name: "tcps_sidewall_name"}, {Name: "tcps_ub_id"}},
-			UpdateAll: true,
-		},
-	).Create(&t)
+	// ส่งไปยัง API
+	var apiData []services.TireAPI
+	for _, r := range input {
+		apiData = append(apiData, services.TireAPI{
+			TcpsUbID:         r.TcpsUbID,
+			TcpsTbName:       r.TcpsTbName,
+			TcpsTbiName:      r.TcpsTbiName,
+			TcpsSidewallName: r.TcpsSidewallName,
+			TcpsPriceR13:     r.TcpsPriceR13,
+			TcpsPriceR14:     r.TcpsPriceR14,
+			TcpsPriceR15:     r.TcpsPriceR15,
+			TcpsPriceR16:     r.TcpsPriceR16,
+			TcpsPriceR17:     r.TcpsPriceR17,
+			TcpsPriceR18:     r.TcpsPriceR18,
+			TcpsPriceR19:     r.TcpsPriceR19,
+			TcpsPriceR20:     r.TcpsPriceR20,
+			TcpsPriceR21:     r.TcpsPriceR21,
+			TcpsPriceR22:     r.TcpsPriceR22,
+			TcpsPriceTradeIn: r.TcpsPriceTradeIn,
+		})
+	}
+
+	updated, err := services.UpdatePriceList(tcpsID, apiData)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "API update failed"})
+	}
+
+	// อัปเดตฐานข้อมูลของเรา
+	for _, u := range updated {
+		database.DB.Model(&models.UserTire{}).Where("tcps_ub_id = ? AND tcps_tb_name = ? AND tcps_tbi_name = ? AND tcps_sidewall_name = ?", u.TcpsUbID, u.TcpsTbName, u.TcpsTbiName, u.TcpsSidewallName).Updates(models.UserTire{
+			TcpsPriceR13:     u.TcpsPriceR13,
+			TcpsPriceR14:     u.TcpsPriceR14,
+			TcpsPriceR15:     u.TcpsPriceR15,
+			TcpsPriceR16:     u.TcpsPriceR16,
+			TcpsPriceR17:     u.TcpsPriceR17,
+			TcpsPriceR18:     u.TcpsPriceR18,
+			TcpsPriceR19:     u.TcpsPriceR19,
+			TcpsPriceR20:     u.TcpsPriceR20,
+			TcpsPriceR21:     u.TcpsPriceR21,
+			TcpsPriceR22:     u.TcpsPriceR22,
+			TcpsPriceTradeIn: u.TcpsPriceTradeIn,
+			UpdatedAt:        time.Now(),
+		})
+	}
+
+	return c.JSON(fiber.Map{"message": "update success", "data": updated})
 }
 
-	c.JSON(http.StatusOK, gin.H{"message": "sync completed"})
-}

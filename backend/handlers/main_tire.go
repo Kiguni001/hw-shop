@@ -1,49 +1,58 @@
 package handlers
 
 import (
-	"net/http"
 	"time"
+	"Kiguni001/hw-shop/database"
+	"Kiguni001/hw-shop/models"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-
-	"hw-shop/backend/models"
+	"github.com/gofiber/fiber/v2"
 )
 
-type MainTireHandler struct {
-	DB *gorm.DB
-}
-
-// ✅ Admin ดูข้อมูล main_tire
-func (h *MainTireHandler) GetMainTires(c *gin.Context) {
+// ดึง main_tire ทั้งหมด
+func GetMainTires(c *fiber.Ctx) error {
 	var tires []models.MainTire
-	if err := h.DB.Find(&tires).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, tires)
+	database.DB.Find(&tires)
+	return c.JSON(fiber.Map{"data": tires})
 }
 
-// ✅ Admin แก้ไข main_tire ได้อิสระ
-func (h *MainTireHandler) UpdateMainTire(c *gin.Context) {
-	id := c.Param("id")
+// สร้าง row ใหม่ใน main_tire
+func CreateMainTire(c *fiber.Ctx) error {
+	var input models.MainTire
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid input"})
+	}
+
+	input.CreatedAt = time.Now()
+	input.UpdatedAt = time.Now()
+	database.DB.Create(&input)
+
+	return c.JSON(fiber.Map{"message": "main_tire created", "data": input})
+}
+
+// แก้ไข row ของ main_tire
+func UpdateMainTire(c *fiber.Ctx) error {
+	id := c.Params("id")
 	var tire models.MainTire
-	if err := h.DB.First(&tire, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "tire not found"})
-		return
+	if err := database.DB.First(&tire, id).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "not found"})
 	}
 
 	var input models.MainTire
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON"})
-		return
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid input"})
 	}
 
 	input.UpdatedAt = time.Now()
-	if err := h.DB.Model(&tire).Updates(input).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	database.DB.Model(&tire).Updates(input)
 
-	c.JSON(http.StatusOK, gin.H{"message": "updated successfully", "data": tire})
+	return c.JSON(fiber.Map{"message": "main_tire updated", "data": tire})
+}
+
+// ลบ row ของ main_tire
+func DeleteMainTire(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if err := database.DB.Delete(&models.MainTire{}, id).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "delete failed"})
+	}
+	return c.JSON(fiber.Map{"message": "main_tire deleted"})
 }

@@ -1,26 +1,35 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"log"
+	"os"
+	"Kiguni001/hw-shop/database"
+	"Kiguni001/hw-shop/routes"
 
-	"backend/models"
-	"backend/routes"
+	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	dsn := "host=localhost user=postgres password=postgres dbname=tiredb port=5432 sslmode=disable"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	// Load .env
+	err := godotenv.Load()
 	if err != nil {
-		panic("failed to connect database")
+		log.Fatal("Error loading .env file")
 	}
 
-	// Auto migrate tables
-	db.AutoMigrate(&models.UserTire{}, &models.MainTire{})
+	// Connect DB
+	database.ConnectDB()
+	database.Migrate()
 
-	r := gin.Default()
-	routes.RegisterRoutes(r, db)
+	app := fiber.New()
 
-	r.Run(":8080")
+	// Routes
+	routes.SetupRoutes(app)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+
+	log.Fatal(app.Listen(":" + port))
 }

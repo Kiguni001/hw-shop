@@ -1,21 +1,15 @@
-// database/migrate.go
 package database
 
 import (
-	"log"
-
 	"Kiguni001/hw-shop/models"
 )
 
 func Migrate() {
-	err := DB.AutoMigrate(
-		&models.Company{},
+	DB.AutoMigrate(
 		&models.User{},
+		&models.Company{},
 		&models.MainTire{},
 		&models.UserTire{},
 		&models.History{},
 	)
-	if err != nil {
-		log.Fatal("AutoMigrate failed:", err)
-	}
 }

@@ -1,46 +1,53 @@
 package handlers
 
 import (
-	"net/http"
+	// "time"
+	"Kiguni001/hw-shop/database"
+	"Kiguni001/hw-shop/models"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-
-	"hw-shop/backend/middleware" 
-	"hw-shop/backend/models"
-	
-
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
 )
 
-type AuthHandler struct {
-	DB *gorm.DB
-}
+var Store = session.New()
 
-// login สำหรับ admin / user
-func (h *AuthHandler) Login(c *gin.Context) {
-	var input struct {
+func Login(c *fiber.Ctx) error {
+	type LoginInput struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON"})
-		return
+
+	var input LoginInput
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid input"})
 	}
 
-	// admin ตายตัว
-	if input.Username == "Admin" && input.Password == "zxcv1420a" {
-		token, _ := middleware.GenerateToken("Admin", "admin")
-		c.JSON(http.StatusOK, gin.H{"token": token, "role": "admin"})
-		return
-	}
-
-	// user จาก DB
 	var user models.User
-	if err := h.DB.Where("first_name = ? AND password = ?", input.Username, input.Password).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
-		return
+	// ตรวจสอบ Admin
+	if input.Username == "Admin" && input.Password == "zxcv1420a" {
+		user = models.User{
+			ID:        0,
+			FirstName: "Admin",
+			Role:      "admin",
+		}
+	} else {
+		if err := database.DB.Where("first_name = ? AND password = ?", input.Username, input.Password).First(&user).Error; err != nil {
+			return c.Status(401).JSON(fiber.Map{"error": "invalid credentials"})
+		}
 	}
 
-	token, _ := middleware.GenerateToken(user.FirstName, "user")
-	c.JSON(http.StatusOK, gin.H{"token": token, "role": "user"})
+	// สร้าง Session
+	sess, _ := Store.Get(c)
+	sess.Set("user_id", user.ID)
+	sess.Set("role", user.Role)
+	sess.Set("tcps_id", user.TcpsID)
+	sess.Save()
+
+	return c.JSON(fiber.Map{"message": "login success", "role": user.Role})
+}
+
+func Logout(c *fiber.Ctx) error {
+	sess, _ := Store.Get(c)
+	sess.Destroy()
+	return c.JSON(fiber.Map{"message": "logout success"})
 }
