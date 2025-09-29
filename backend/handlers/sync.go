@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"time"
 	"Kiguni001/hw-shop/database"
 	"Kiguni001/hw-shop/models"
 	"Kiguni001/hw-shop/services"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )

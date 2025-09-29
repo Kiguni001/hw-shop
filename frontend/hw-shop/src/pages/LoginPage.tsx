@@ -4,32 +4,25 @@ import { Link, useNavigate } from "react-router-dom";
 import styles from "../styles/LoginPage.module.css";
 
 const LoginPage: React.FC = () => {
-  // เปลี่ยน email เป็น firstName
-  const [firstName, setFirstName] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [error, setError] = useState<string | null>(null);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
-    // เปลี่ยนเงื่อนไขการตรวจสอบเป็น firstName
-    if (!firstName || !password) {
-      setError("กรุณากรอกชื่อจริงและรหัสผ่าน");
+    if (!username || !password) {
+      setError("กรุณากรอกชื่อผู้ใช้และรหัสผ่าน");
       return;
     }
 
     try {
-      const response = await fetch("http://localhost:3001/api/login", {
+      const response = await fetch("http://localhost:3000/api/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        // เปลี่ยน body ที่ส่งไปให้ Backend เป็น first_name
-        body: JSON.stringify({
-          first_name: firstName,
-          password: password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // ส่ง cookie/session ไปเก็บ session
+        body: JSON.stringify({ username, password }), // ✅ แก้เป็น username
       });
 
       if (!response.ok) {
@@ -37,25 +30,20 @@ const LoginPage: React.FC = () => {
         throw new Error(errorData.error || "เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
       }
 
+      // login สำเร็จ
       const data = await response.json();
       console.log("เข้าสู่ระบบสำเร็จ:", data);
 
-      // แทนที่ alert ด้วยการนำทางไปยังหน้าอื่น
-      navigate("/home"); // เปลี่ยนเส้นทางไปยัง '/home'
-
-      // ลบส่วนจำลองการทำงานออก เพราะใช้การเรียก API จริงแล้ว
-      // const data = await response.json();
-      // console.log("เข้าสู่ระบบสำเร็จ:", data);
-      // alert(data.message);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
+      // redirect ตาม role
+      if (data.role === "admin") {
+        navigate("/admin");
       } else {
-        setError("เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ");
+        navigate("/home");
       }
+    } catch (err) {
+      if (err instanceof Error) setError(err.message);
+      else setError("เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ");
     }
-
-    // ลบส่วนจำลองการทำงานออก เพราะใช้การเรียก API จริงแล้ว
   };
 
   return (
@@ -65,26 +53,23 @@ const LoginPage: React.FC = () => {
         {error && <p className={styles.errorMessage}>{error}</p>}
         <form onSubmit={handleSubmit} className={styles.loginForm}>
           <div className={styles.inputGroup}>
-            {/* เปลี่ยน label และ id เป็นชื่อจริง */}
-            <label htmlFor="firstName">ชื่อจริง</label>
+            <label htmlFor="username">ชื่อผู้ใช้</label>
             <input
-              type="text" // เปลี่ยน type เป็น text
-              id="firstName"
+              type="text"
+              placeholder="Username"
               className={styles.inputField}
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
             />
           </div>
           <div className={styles.inputGroup}>
             <label htmlFor="password">รหัสผ่าน</label>
             <input
               type="password"
-              id="password"
+              placeholder="Password"
               className={styles.inputField}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
             />
           </div>
           <button type="submit" className={styles.loginButton}>

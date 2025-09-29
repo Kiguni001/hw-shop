@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import styles from "../styles/HomePage.module.css";
 import logo from "../assets/icons/logo.png";
 import SearchBar from "../components/SearchBar";
+import UserTireTable from "../components/UserTireTable";
 
 interface UserData {
   first_name: string;
@@ -12,44 +13,54 @@ interface UserData {
 
 const HomePage: React.FC = () => {
   // สร้าง state สำหรับเก็บข้อมูลผู้ใช้
+  const [userTireData, setUserTireData] = useState<any[]>([]);
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchUserTire = async () => {
       try {
-        // สมมติว่ามี API สำหรับดึงข้อมูลผู้ใช้ที่ล็อกอินอยู่
-        // ในโปรเจกต์จริง คุณจะต้องส่ง Authentication Token ไปด้วย
-        const response = await fetch("http://localhost:3001/api/user/me");
+        const response = await fetch("http://localhost:3000/api/user_tire", {
+          credentials: "include", // ส่ง session cookie ไปด้วย
+        });
+        if (!response.ok) throw new Error("Failed to fetch user tire data");
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch user data");
-        }
-
-        const data: UserData = await response.json();
-        setUser(data);
-        setLoading(false);
+        const data = await response.json();
+        setUserTireData(data); // ✅ ใช้งาน setUserTireData
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("An unknown error occurred");
-        }
-        setLoading(false);
+        console.error(err);
       }
     };
-
-    fetchUserData();
+    fetchUserTire();
+    // const fetchUserData = async () => {
+    //   try {
+    //     const response = await fetch("http://localhost:3000/api/user/me");
+    //     if (!response.ok) {
+    //       throw new Error("Failed to fetch user data");
+    //     }
+    //     const data: UserData = await response.json();
+    //     setUser(data);
+    //     setLoading(false);
+    //   } catch (err) {
+    //     if (err instanceof Error) {
+    //       setError(err.message);
+    //     } else {
+    //       setError("An unknown error occurred");
+    //     }
+    //     setLoading(false);
+    //   }
+    // };
+    // fetchUserData();
   }, []); // [] เพื่อให้ useEffect ทำงานแค่ครั้งเดียวตอนโหลดหน้าเว็บ
 
-  if (loading) {
-    return <div className={styles.container}>กำลังโหลดข้อมูล...</div>;
-  }
+  // if (loading) {
+  //   return <div className={styles.container}>กำลังโหลดข้อมูล...</div>;
+  // }
 
-  if (error) {
-    return <div className={styles.container}>Error: {error}</div>;
-  }
+  // if (error) {
+  //   return <div className={styles.container}>Error: {error}</div>;
+  // }
 
   return (
     <div className={styles.homePageContainer}>
@@ -110,6 +121,12 @@ const HomePage: React.FC = () => {
         </div>
         <div className={styles.Zone3}>
           <SearchBar />
+          <UserTireTable
+            data={userTireData}
+            onSave={(rows) => console.log("save rows", rows)}
+            validatePrice={(field, value) => value >= 900 && value < 5000}
+          />
+
           <p>This is some content for Zone 3.</p>
         </div>
       </div>

@@ -1,172 +1,235 @@
 // src/pages/RegisterPage.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import type { FormEvent } from "react";
 import styles from "../styles/RegisterPage.module.css";
 
 interface Company {
   id: number;
   name: string;
+  tcps_ub_id: string;
 }
 
 const RegisterPage: React.FC = () => {
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [phoneNumber, setPhoneNumber] = useState<string>("");
-  const [companyId, setCompanyId] = useState<number | "">("");
-  const [position, setPosition] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [step, setStep] = useState<1 | 2>(1); // สเต็ป 1 = สร้างบริษัท, 2 = สร้าง user
+  const [companyName, setCompanyName] = useState("");
+  const [tcpsUbId, setTcpsUbId] = useState("");
+  const [companyCreated, setCompanyCreated] = useState<Company | null>(null);
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [position, setPosition] = useState("");
+  const [password, setPassword] = useState("");
+
   const [error, setError] = useState<string | null>(null);
 
-  // ดึงรายชื่อบริษัทจาก API
-  useEffect(() => {
-    fetch("http://localhost:3001/api/companies")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setCompanies(data);
-        else setCompanies([]);
-      })
-      .catch((err) => {
-        console.error("Cannot fetch companies:", err);
-        setCompanies([]);
-      });
-  }, []);
-
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!companyId) {
-      setError("กรุณาเลือกบริษัท");
+  // Step 1: สร้างบริษัท
+  const handleCreateCompany = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!companyName || !tcpsUbId) {
+      setError("กรุณากรอกชื่อบริษัทและ TCP ID");
       return;
     }
-
     setError(null);
 
-    const userData = {
-      first_name: firstName,
-      last_name: lastName,
-      phone_number: phoneNumber,
-      company_id: companyId, // ส่งเป็น ID ของบริษัท
-      position: position,
-      password_hash: password,
+    const companyData = {
+      name: companyName, // สมมติคุณเก็บชื่อบริษัทใน state companyName
+      tcps_ub_id: tcpsUbId, // สมมติคุณเก็บ tcps_ub_id ใน state tcpsUbId
     };
 
     try {
-      const response = await fetch("http://localhost:3001/api/register", {
+      const response = await fetch("http://localhost:3000/api/company", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userData),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(companyData),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to register");
+        const data = await response.json();
+        throw new Error(data.error || "ไม่สามารถสร้างบริษัทได้");
       }
 
       const data = await response.json();
-      console.log("Registration successful:", data);
-      alert(data.message);
+      setCompanyCreated({
+        id: data.id,
+        name: companyName,
+        tcps_ub_id: tcpsUbId,
+      });
+      setStep(2);
     } catch (err) {
       if (err instanceof Error) setError(err.message);
-      else setError("An unknown error occurred");
+      else setError("เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ");
+    }
+  };
+
+  // Step 2: สร้าง User แรกของบริษัท
+  const handleCreateUser = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!firstName || !lastName || !phone || !position || !password) {
+      setError("กรุณากรอกข้อมูลให้ครบ");
+      return;
+    }
+    if (!companyCreated) return;
+
+    setError(null);
+
+    // console.log(companyName);
+    // console.log(tcpsUbId);
+    // console.log("companyName");
+    // console.log(companyName);
+    // console.log(tcpsUbId);
+    // console.log("tcpsUbId");
+    try {
+      // console.log("companyName");
+      // console.log(companyName);
+      // console.log(tcpsUbId);
+      // console.log("tcpsUbId");
+      const response = await fetch("http://localhost:3000/api/user", {
+        // app.Post("/api/user", handlers.CreateCompany)
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyName: companyName,
+          tcpsUbId: tcpsUbId,
+          first_name: firstName,
+          last_name: lastName,
+          phone: phone,
+          position: position,
+          password: password,
+          // tcps_ub_id: companyCreated.tcps_ub_id,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "ไม่สามารถสร้างผู้ใช้ได้");
+      }
+
+      const data = await response.json();
+      alert(data.message || "สร้างผู้ใช้สำเร็จ!");
+      // รีเซ็ตฟอร์มหรือ redirect ไปหน้า login
+      setStep(1);
+      setCompanyName("");
+      setTcpsUbId("");
+      setCompanyCreated(null);
+      setFirstName("");
+      setLastName("");
+      setPhone("");
+      setPosition("");
+      setPassword("");
+    } catch (err) {
+      if (err instanceof Error) setError(err.message);
+      else setError("เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ");
     }
   };
 
   return (
     <div className={styles.registerPageContainer}>
       <div className={styles.registerBox}>
-        <h2 className={styles.title}>ลงทะเบียน</h2>
-        {error && <p className={styles.errorMessage}>{error}</p>}
-        <form onSubmit={handleSubmit} className={styles.registerForm}>
-          <div className={styles.inputGroup}>
-            <label htmlFor="firstName">ชื่อจริง</label>
-            <input
-              type="text"
-              id="firstName"
-              className={styles.inputField}
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className={styles.inputGroup}>
-            <label htmlFor="lastName">นามสกุล</label>
-            <input
-              type="text"
-              id="lastName"
-              className={styles.inputField}
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className={styles.inputGroup}>
-            <label htmlFor="phoneNumber">เบอร์โทรศัพท์</label>
-            <input
-              type="tel"
-              id="phoneNumber"
-              className={styles.inputField}
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className={styles.inputGroup}>
-            <label htmlFor="companyId">บริษัท</label>
-            <select
-              id="companyId"
-              className={styles.inputField}
-              value={companyId}
-              onChange={(e) => setCompanyId(Number(e.target.value))}
-              required
+        {step === 1 && (
+          <>
+            <h2 className={styles.title}>สร้างบริษัท</h2>
+            {error && <p className={styles.errorMessage}>{error}</p>}
+            <form
+              onSubmit={handleCreateCompany}
+              className={styles.registerForm}
             >
-              <option value="">-- เลือกบริษัท --</option>
-              {companies.map((company) => (
-                <option key={company.id} value={company.id}>
-                  {company.name}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div className={styles.inputGroup}>
+                <label htmlFor="companyName">ชื่อบริษัท</label>
+                <input
+                  type="text"
+                  id="companyName"
+                  className={styles.inputField}
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <label htmlFor="tcpsUbId">TCP ID</label>
+                <input
+                  type="text"
+                  id="tcpsUbId"
+                  className={styles.inputField}
+                  value={tcpsUbId}
+                  onChange={(e) => setTcpsUbId(e.target.value)}
+                  required
+                />
+              </div>
+              <button type="submit" className={styles.registerButton}>
+                สร้างบริษัท
+              </button>
+            </form>
+          </>
+        )}
 
-          <div className={styles.inputGroup}>
-            <label htmlFor="position">ตำแหน่ง</label>
-            <input
-              type="text"
-              id="position"
-              className={styles.inputField}
-              value={position}
-              onChange={(e) => setPosition(e.target.value)}
-              required
-            />
-          </div>
+        {step === 2 && (
+          <>
+            <h2 className={styles.title}>สร้างผู้ใช้แรกของบริษัท</h2>
+            {error && <p className={styles.errorMessage}>{error}</p>}
+            <form onSubmit={handleCreateUser} className={styles.registerForm}>
+              <div className={styles.inputGroup}>
+                <label htmlFor="firstName">ชื่อจริง</label>
+                <input
+                  type="text"
+                  id="firstName"
+                  className={styles.inputField}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <label htmlFor="lastName">นามสกุล</label>
+                <input
+                  type="text"
+                  id="lastName"
+                  className={styles.inputField}
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <label htmlFor="phone">เบอร์โทรศัพท์</label>
+                <input
+                  type="tel"
+                  id="phone"
+                  className={styles.inputField}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <label htmlFor="position">ตำแหน่ง</label>
+                <input
+                  type="text"
+                  id="position"
+                  className={styles.inputField}
+                  value={position}
+                  onChange={(e) => setPosition(e.target.value)}
+                  required
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <label htmlFor="password">รหัสผ่าน</label>
+                <input
+                  type="password"
+                  id="password"
+                  className={styles.inputField}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
 
-          <div className={styles.inputGroup}>
-            <label htmlFor="password">รหัสผ่าน</label>
-            <input
-              type="password"
-              id="password"
-              className={styles.inputField}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <button type="submit" className={styles.registerButton}>
-            ลงทะเบียน
-          </button>
-        </form>
-        <p className={styles.footerText}>
-          มีบัญชีอยู่แล้ว?{" "}
-          <a href="/login" className={styles.link}>
-            เข้าสู่ระบบ
-          </a>
-        </p>
+              <button type="submit" className={styles.registerButton}>
+                สร้างผู้ใช้
+              </button>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );

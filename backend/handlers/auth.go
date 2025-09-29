@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	// "time"
 	"Kiguni001/hw-shop/database"
 	"Kiguni001/hw-shop/models"
 

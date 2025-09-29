@@ -1,65 +1,46 @@
-@import url("https://fonts.googleapis.com/css2?family=Anuphan:wght@100..700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Noto+Sans+Thai:wght@100..900&family=Orbitron:wght@400..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100..900&display=swap");
 
 .homePageContainer {
   display: flex;
+  height: 100vh; /* ครอบ viewport */
   font-family: "Noto Sans Thai", sans-serif;
 }
 
-.logoimg {
+/* Sidebar */
+.BoxZone1 {
+  background-color: #373330;
+  width: 6.25%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.Zone1 {
   width: 100%;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 30px;
 }
 
 .logoimg img {
   width: 75%;
-  justify-self: center;
-  padding-top: 30%;
 }
 
 .line {
   border: none;
   height: 2px;
-  background-color: #ffff;
-  margin: 32% 10% 32% 10%;
+  background-color: #fff;
+  width: 60%;
+  margin: 20px 0;
   opacity: 0.5;
 }
 
-.profileButton {
-  display: flex;
-  flex-direction: column; /* เรียงบน-ล่าง */
-  align-items: center; /* จัดกึ่งกลาง */
-  justify-content: center;
-  background: none; /* ไม่ต้องการปุ่มพื้นหลัง */
-  border: none; /* ตัดขอบออก */
-  cursor: pointer; /* ให้เป็นปุ่มกด */
-  padding: 10px;
-  font-size: 12px;
-  margin-bottom: 24%;
-  opacity: 0.5;
-}
-
-.profileButton img {
-  width: 30%;
-  padding-bottom: 9%;
-}
-
-.saleButton {
-  display: flex;
-  flex-direction: column; /* เรียงบน-ล่าง */
-  align-items: center; /* จัดกึ่งกลาง */
-  justify-content: center;
-  background: none; /* ไม่ต้องการปุ่มพื้นหลัง */
-  border: none; /* ตัดขอบออก */
-  cursor: pointer; /* ให้เป็นปุ่มกด */
-  padding: 10px;
-  font-size: 12px;
-  opacity: 0.5;
-}
-
-.saleButton img {
-  width: 30%;
-  padding-bottom: 9%;
-}
-
+/* Buttons */
+.profileButton,
+.saleButton,
 .exitButton {
   display: flex;
   flex-direction: column;
@@ -70,50 +51,44 @@
   cursor: pointer;
   padding: 10px;
   font-size: 12px;
-  opacity: 0.5;
-
-  position: absolute; /* ปรับตำแหน่งแบบ absolute */
-  left: 0px; /* เว้นจากขอบซ้าย 10px */
-  bottom: 10px; /* เว้นจากขอบล่าง 10px */
+  opacity: 0.8;
+  margin-bottom: 24px;
 }
 
+.exitButton {
+  position: absolute;
+  bottom: 10px;
+}
+
+.profileButton img,
+.saleButton img,
 .exitButton img {
   width: 30%;
   padding-bottom: 6%;
 }
 
-.BoxZone1 {
-  background-color: red;
-  width: 6.25%;
+/* Main Content */
+.BoxZone2 {
+  width: calc(100% - 6.25%);
   display: flex;
-}
-
-.BoxZone2 {
-  width: 100%;
-  height: 100vh;
-}
-
-.Zone1 {
-  background-color: #373330;
-  height: 100vh;
-  width: 100%;
-  position: relative; /* ทำให้ children สามารถ absolute ได้ */
-}
-
-.BoxZone2 {
-  width: 100%;
-  height: 100vh;
-  overflow: visible; /* ให้เงาโผล่ออกมานอก Zone2 */
+  flex-direction: column;
 }
 
 .Zone2 {
   background-color: #f8f8f8;
   height: 11%;
-  position: relative;
-  z-index: 2; /* ให้อยู่เหนือ Zone3 */
-  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3); /* เงาตกลงมา */
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+  z-index: 2;
 }
 
+.Zone3 {
+  background-color: #ffffff;
+  flex-grow: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* User Info */
 .userInfo {
   display: flex;
   flex-direction: column;
@@ -126,7 +101,6 @@
   color: #555;
   display: flex;
   align-items: center;
-  padding: 0;
 }
 
 .bullet {
@@ -140,57 +114,4 @@
   font-weight: 500;
   color: #2c3e50;
   margin-top: 0px;
-}
-
-.Zone3 {
-  background-color: #ffffff;
-  height: 89%;
-  padding-right: 3%;
-}
-
-.searchContainer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 10px 0;
-}
-
-.searchBox {
-  display: flex;
-  align-items: center;
-  border: 1px solid #ccc;
-  border-radius: 20px;
-  padding: 5px 10px;
-  background: #fff;
-}
-
-.searchBox input {
-  border: none;
-  outline: none;
-  font-size: 14px;
-  padding: 5px;
-}
-
-.searchBtn {
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.brandBtn {
-  background: #888;
-  color: #fff;
-  border: none;
-  border-radius: 20px;
-  padding: 5px 15px;
-  cursor: pointer;
-  margin-left: 10px;
-}
-
-.itemCount {
-  margin-left: 10px;
-  font-size: 14px;
-  color: #333;
 }
