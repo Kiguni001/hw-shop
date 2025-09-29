@@ -12,22 +12,23 @@ import (
 // Sync user_tire ของ user กับ API ทุกครั้งหน้า Home/Refresh
 func SyncUserTires(c *fiber.Ctx) error {
 	sess, _ := Store.Get(c)
-	tcpsID := sess.Get("tcps_id").(string)
+	tcpsUbID := sess.Get("tcps_ub_id").(string)
 
 	// ดึงข้อมูลจาก API
-	apiTires, err := services.FetchPriceList(tcpsID)
+	apiTires, err := services.FetchPriceList(tcpsUbID)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "failed to fetch API"})
 	}
 
 	for _, t := range apiTires {
 		var userTire models.UserTire
-		err := database.DB.Where("tcps_ub_id = ? AND tcps_tb_name = ? AND tcps_tbi_name = ? AND tcps_sidewall_name = ?", 
-			t.TcpsUbID, t.TcpsTbName, t.TcpsTbiName, t.TcpsSidewallName).First(&userTire).Error
+		err := database.DB.Where("tcps_id = ? AND tcps_ub_id = ? AND tcps_tb_name = ? AND tcps_tbi_name = ? AND tcps_sidewall_name = ?", 
+			t.TcpsID, t.TcpsUbID, t.TcpsTbName, t.TcpsTbiName, t.TcpsSidewallName).First(&userTire).Error
 
 		if err != nil {
 			// ถ้าไม่มี row ให้สร้างใหม่
 			newRow := models.UserTire{
+				TcpsID:           t.TcpsID,
 				TcpsUbID:         t.TcpsUbID,
 				TcpsTbName:       t.TcpsTbName,
 				TcpsTbiName:      t.TcpsTbiName,
@@ -67,7 +68,7 @@ func SyncUserTires(c *fiber.Ctx) error {
 
 	// Return updated user_tire
 	var tires []models.UserTire
-	database.DB.Where("tcps_ub_id = ?", tcpsID).Find(&tires)
+	database.DB.Where("tcps_ub_id = ?", tcpsUbID).Find(&tires)
 
 	return c.JSON(fiber.Map{"data": tires})
 }

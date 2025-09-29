@@ -5,7 +5,7 @@ import "time"
 type Company struct {
 	ID     uint   `json:"id" gorm:"primaryKey"`
 	Name   string `json:"name"`
-	TcpsID string `json:"tcps_id"` // company identifier
+	TcpsUbID  string `json:"tcps_ub_id"` // company ID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

@@ -83,7 +83,7 @@ type Updateprice struct {
     DataList     []Data_update `json:"data_list"`
 }
 type Data_update struct {
-	TcpsID         string  `json:"tcps_id"`
+	TcpsUbID         string  `json:"tcps_ub_id"`
 	TcpsUpdatedAt    float64 `json:"updated_at"`
 }
 func strToFloat(s string) float64 {
@@ -95,7 +95,7 @@ func strToFloat(s string) float64 {
 }
 func convertTire(jsonTire TireAPIJSON) TireAPI {
     return TireAPI{
-        TcpsID:         jsonTire.TcpsID,
+        TcpsID:         jsonTire.TcpsID,   // ✅ ต้องเพิ่มบรรทัดนี้
         TcpsUbID:       jsonTire.TcpsUbID,
         TcpsTbName:     jsonTire.TcpsTbName,
         TcpsTbiName:    jsonTire.TcpsTbiName,
@@ -191,20 +191,14 @@ func FetchPriceList(tcpsUbID string) ([]TireAPI, error) {
 	}
 
 
-	if len(respData.DataList) > 0{
+	if len(respData.DataList) > 0 {
+    var tires []TireAPI
+    for _, t := range respData.DataList {
+        tires = append(tires, convertTire(t))
+    }
+    updated = tires
+}
 
-		var tiresJSON []TireAPIJSON
-		json.Unmarshal(body, &tiresJSON)
-
-		var tires []TireAPI
-		for _, t := range tiresJSON {
-			tires = append(tires, convertTire(t))
-		}
-
-
-
-		updated = tires;
-	}
 
 
 	

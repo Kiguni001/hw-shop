@@ -39,7 +39,8 @@ func Login(c *fiber.Ctx) error {
 	sess, _ := Store.Get(c)
 	sess.Set("user_id", user.ID)
 	sess.Set("role", user.Role)
-	sess.Set("tcps_id", user.TcpsID)
+sess.Set("tcps_ub_id", user.TcpsUbID)
+
 	sess.Save()
 
 	return c.JSON(fiber.Map{"message": "login success", "role": user.Role})

@@ -152,7 +152,7 @@ fmt.Printf("Parsed Input: %+v\n", input)
     
 	company := models.Company{
 		Name:   input.CompanyName,
-		TcpsID: input.TcpsUbId,
+		TcpsUbID: input.TcpsUbId,
 	}
 	database.DB.Create(&company)
 
@@ -164,7 +164,7 @@ fmt.Printf("Parsed Input: %+v\n", input)
 			Password:  input.Password,
 			Position:  input.Position,
 			Role:      "user",
-			TcpsID:    input.TcpsUbId,
+			TcpsUbID:  input.TcpsUbId,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
@@ -196,6 +196,7 @@ fmt.Printf("Parsed Input: %+v\n", input)
 
 	for _, t := range apiTires {
 		userTire := models.UserTire{
+			TcpsID:           t.TcpsID,
 			TcpsUbID:         t.TcpsUbID,
 			TcpsTbName:       t.TcpsTbName,
 			TcpsTbiName:      t.TcpsTbiName,

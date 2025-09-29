@@ -12,10 +12,10 @@ import (
 // ดึง user_tire ของ user
 func GetUserTires(c *fiber.Ctx) error {
 	sess, _ := Store.Get(c)
-	tcpsID := sess.Get("tcps_id").(string)
+	tcpsUbID := sess.Get("tcps_ub_id").(string)
 
 	var tires []models.UserTire
-	database.DB.Where("tcps_ub_id = ?", tcpsID).Find(&tires)
+	database.DB.Where("tcps_ub_id = ?", tcpsUbID).Find(&tires)
 
 	return c.JSON(fiber.Map{"data": tires})
 }
@@ -23,7 +23,7 @@ func GetUserTires(c *fiber.Ctx) error {
 // Update ราคาทั้งก้อน
 func UpdateUserTires(c *fiber.Ctx) error {
 	sess, _ := Store.Get(c)
-	tcpsID := sess.Get("tcps_id").(string)
+	TcpsUbID := sess.Get("tcps_ub_id").(string)
 
 	var input []models.UserTire
 	if err := c.BodyParser(&input); err != nil {
@@ -91,6 +91,7 @@ func UpdateUserTires(c *fiber.Ctx) error {
 	var apiData []services.TireAPI
 	for _, r := range input {
 		apiData = append(apiData, services.TireAPI{
+			TcpsID:           r.TcpsID,
 			TcpsUbID:         r.TcpsUbID,
 			TcpsTbName:       r.TcpsTbName,
 			TcpsTbiName:      r.TcpsTbiName,
@@ -109,14 +110,14 @@ func UpdateUserTires(c *fiber.Ctx) error {
 		})
 	}
 
-	updated, err := services.UpdatePriceList(tcpsID, apiData)
+	updated, err := services.UpdatePriceList(TcpsUbID, apiData)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "API update failed"})
 	}
 
 	// อัปเดตฐานข้อมูลของเรา
 	for _, u := range updated {
-		database.DB.Model(&models.UserTire{}).Where("tcps_ub_id = ? AND tcps_tb_name = ? AND tcps_tbi_name = ? AND tcps_sidewall_name = ?", u.TcpsUbID, u.TcpsTbName, u.TcpsTbiName, u.TcpsSidewallName).Updates(models.UserTire{
+		database.DB.Model(&models.UserTire{}).Where("tcps_id = ? AND tcps_ub_id = ? AND tcps_tb_name = ? AND tcps_tbi_name = ? AND tcps_sidewall_name = ?", u.TcpsID, u.TcpsUbID, u.TcpsTbName, u.TcpsTbiName, u.TcpsSidewallName).Updates(models.UserTire{
 			TcpsPriceR13:     u.TcpsPriceR13,
 			TcpsPriceR14:     u.TcpsPriceR14,
 			TcpsPriceR15:     u.TcpsPriceR15,

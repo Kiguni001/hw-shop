@@ -3,11 +3,12 @@ package models
 import "time"
 
 type UserTire struct {
-	ID               uint    `json:"id" gorm:"primaryKey"`
-	TcpsUbID         string  `json:"tcps_ub_id"` // company ID
-	TcpsTbName       string  `json:"tcps_tb_name"`
-	TcpsTbiName      string  `json:"tcps_tbi_name"`
-	TcpsSidewallName string  `json:"tcps_sidewall_name"`
+	ID               uint    `gorm:"primaryKey"`
+    TcpsID           string  `json:"tcps_id"`
+    TcpsUbID         string  `json:"tcps_ub_id"`
+    TcpsTbName       string  `json:"tcps_tb_name"`
+    TcpsTbiName      string  `json:"tcps_tbi_name"`
+    TcpsSidewallName string  `json:"tcps_sidewall_name"`
 	TcpsPriceR13     float64 `json:"tcps_price_r13"`
 	TcpsPriceR14     float64 `json:"tcps_price_r14"`
 	TcpsPriceR15     float64 `json:"tcps_price_r15"`
