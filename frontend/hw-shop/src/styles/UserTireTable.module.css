@@ -1,0 +1,90 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100..900&display=swap");
+
+.tableContainer {
+  max-height: 500px; /* ปรับความสูงตามต้องการ */
+  overflow-y: auto; /* ให้สามารถเลื่อนใน container ได้ */
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-family: "Noto Sans Thai", sans-serif;
+  background-color: #f9fafb;
+
+  /* ซ่อน scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+
+.tableContainer::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+.table {
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem; /* text-sm */
+}
+
+.table th {
+  background-color: #1f2937; /* สีเข้มสำหรับ header */
+  color: #f9fafb; /* ตัวอักษรสีขาว */
+  border: 1px solid #d1d5db;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.table td {
+  border: 1px solid #d1d5db;
+  padding: 0.5rem;
+  text-align: center;
+
+  color: #111827; /* ตัวอักษรสีเข้ม */
+}
+
+/* ✅ หัวคอลัมแบบ sticky */
+.table thead th {
+  position: sticky;
+  top: 0;
+
+  z-index: 2;
+  padding: 10px;
+  text-align: center; /* หัวตารางชิดกลาง */
+}
+
+.table th:nth-child(1),
+.table td:nth-child(1) {
+  width: 180px;
+}
+
+.table th:nth-child(2),
+.table td:nth-child(2) {
+  width: 180px; /* ปรับความกว้าง Pattern */
+}
+
+/* --- ข้อมูลในคอลัม Brand/Pattern ชิดซ้าย --- */
+.table td:nth-child(1),
+.table td:nth-child(2) {
+  text-align: left;
+  padding-left: 12px; /* เพิ่ม margin ด้านซ้ายเล็กน้อย */
+}
+
+.inputCell {
+  width: 4rem;
+  border: none;
+  background-color: transparent;
+  text-align: center;
+  outline: none;
+}
+
+/* highlight edit/invalid */
+.edited {
+  background-color: #fde68a; /* เหลือง */
+}
+
+.invalid {
+  background-color: #fca5a5; /* แดง */
+}
+
+/* hover */
+.table tr:hover td {
+  background-color: #f3f4f6;
+}

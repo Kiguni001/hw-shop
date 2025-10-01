@@ -122,12 +122,9 @@ const HomePage: React.FC = () => {
         <div className={styles.Zone3}>
           <SearchBar />
           <UserTireTable
-            data={userTireData}
-            onSave={(rows) => console.log("save rows", rows)}
+            userUbId={user?.tcps_ub_id ?? ""} // ส่ง tcps_ub_id ของ user ปัจจุบัน
             validatePrice={(field, value) => value >= 900 && value < 5000}
           />
-
-          <p>This is some content for Zone 3.</p>
         </div>
       </div>
     </div>

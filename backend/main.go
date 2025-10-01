@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/joho/godotenv"
@@ -34,6 +35,7 @@ func main() {
 
 	// Routes
 	routes.SetupRoutes(app)
+	routes.UserTireRoutes(app, database.DB)
 
 	port := os.Getenv("PORT")
 	if port == "" {

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import styles from "../styles/UserTireTable.module.css";
 
 type PriceKeys =
   | "tcps_price_r13"
@@ -24,16 +25,36 @@ type TireRow = {
 };
 
 type Props = {
-  data: TireRow[];
-  onSave: (rows: TireRow[]) => void;
+  userUbId: string; // tcps_ub_id ของ user ปัจจุบัน
   validatePrice: (field: string, value: number) => boolean;
 };
 
-const UserTireTable: React.FC<Props> = ({ data, onSave, validatePrice }) => {
-  const [rows, setRows] = useState<TireRow[]>(data);
+const UserTireTable: React.FC<Props> = ({ userUbId, validatePrice }) => {
+  const [rows, setRows] = useState<TireRow[]>([]);
   const [edited, setEdited] = useState<{
     [key: string]: "valid" | "invalid" | "edited";
   }>({});
+
+  // fetch data จาก API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/user_tire", {
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("Failed to fetch data");
+
+        const data: TireRow[] = await res.json();
+
+        // filter ให้เหลือเฉพาะ row ที่ tcps_ub_id ตรงกับ user
+        const filtered = data.filter((row) => row.tcps_ub_id === userUbId);
+        setRows(filtered);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchData();
+  }, [userUbId]);
 
   const handleEdit = (
     rowIndex: number,
@@ -41,15 +62,13 @@ const UserTireTable: React.FC<Props> = ({ data, onSave, validatePrice }) => {
     value: number
   ) => {
     const newRows = [...rows];
-    const numValue = Number(value);
 
-    // update row
-    // @ts-expect-error: backend API อาจส่ง string มาแทน number
-    newRows[rowIndex][field] = numValue;
+    if (isPriceKey(field)) {
+      newRows[rowIndex][field] = Number(value);
+    }
 
-    // validate
     const key = `${rowIndex}-${field}`;
-    if (!validatePrice(field as string, numValue)) {
+    if (!validatePrice(field as string, Number(value))) {
       setEdited((prev) => ({ ...prev, [key]: "invalid" }));
     } else {
       setEdited((prev) => ({ ...prev, [key]: "edited" }));
@@ -58,43 +77,50 @@ const UserTireTable: React.FC<Props> = ({ data, onSave, validatePrice }) => {
     setRows(newRows);
   };
 
+  // helper function
+  function isPriceKey(key: keyof TireRow): key is PriceKeys {
+    return key.startsWith("tcps_price_");
+  }
+
   return (
-    <div className="overflow-x-auto rounded-lg shadow">
-      <table className="min-w-full border border-gray-300 text-sm">
-        <thead className="bg-gray-100">
+    <div className={styles.tableContainer}>
+      <table className={styles.table}>
+        <thead>
           <tr>
-            <th className="border p-2">Brand</th>
-            <th className="border p-2">Pattern</th>
-            <th className="border p-2">Sidewall</th>
-            <th className="border p-2">R13</th>
-            <th className="border p-2">R14</th>
-            <th className="border p-2">R15</th>
-            <th className="border p-2">R16</th>
-            <th className="border p-2">R17</th>
-            <th className="border p-2">R18</th>
-            <th className="border p-2">R19</th>
-            <th className="border p-2">R20</th>
-            <th className="border p-2">R21</th>
-            <th className="border p-2">R22</th>
-            <th className="border p-2">Trade-in</th>
+            <th>Brand</th>
+            <th>Pattern</th>
+            <th>Sidewall</th>
+            <th>R13</th>
+            <th>R14</th>
+            <th>R15</th>
+            <th>R16</th>
+            <th>R17</th>
+            <th>R18</th>
+            <th>R19</th>
+            <th>R20</th>
+            <th>R21</th>
+            <th>R22</th>
+            <th>Trade-in</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row, rowIndex) => (
             <tr key={row.id}>
-              <td className="border p-2">{row.tcps_tb_name}</td>
-              <td className="border p-2">{row.tcps_tbi_name}</td>
-              <td className="border p-2">{row.tcps_sidewall_name}</td>
+              <td>{row.tcps_tb_name}</td>
+              <td>{row.tcps_tbi_name}</td>
+              <td>{row.tcps_sidewall_name}</td>
               {Object.keys(row)
                 .filter((k): k is PriceKeys => k.includes("price"))
                 .map((field) => {
                   const key = `${rowIndex}-${field}`;
-                  let bg = "";
-                  if (edited[key] === "invalid") bg = "bg-red-300";
-                  else if (edited[key] === "edited") bg = "bg-yellow-200";
+                  let cellClass = "";
+                  if (edited[key] === "invalid")
+                    cellClass += ` ${styles.invalid}`;
+                  else if (edited[key] === "edited")
+                    cellClass += ` ${styles.edited}`;
 
                   return (
-                    <td key={field} className={`border p-2 ${bg}`}>
+                    <td key={field} className={cellClass}>
                       <input
                         type="number"
                         value={row[field] ?? ""}
@@ -105,7 +131,7 @@ const UserTireTable: React.FC<Props> = ({ data, onSave, validatePrice }) => {
                             Number(e.target.value)
                           )
                         }
-                        className="w-20 border-none bg-transparent text-center focus:outline-none"
+                        className={styles.inputCell}
                       />
                     </td>
                   );
@@ -114,15 +140,6 @@ const UserTireTable: React.FC<Props> = ({ data, onSave, validatePrice }) => {
           ))}
         </tbody>
       </table>
-
-      <div className="mt-4 text-right">
-        <button
-          onClick={() => onSave(rows)}
-          className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          บันทึก
-        </button>
-      </div>
     </div>
   );
 };
