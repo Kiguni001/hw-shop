@@ -151,7 +151,7 @@ fmt.Printf("Parsed Input: %+v\n", input)
 	// สร้างบริษัท
     
 	company := models.Company{
-		Name:   input.CompanyName,
+		CompanyName:   input.CompanyName,
 		TcpsUbID: input.TcpsUbId,
 	}
 	database.DB.Create(&company)

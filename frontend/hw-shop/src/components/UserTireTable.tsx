@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useMemo } from "react";
 import styles from "../styles/UserTireTable.module.css";
 
-type PriceKeys =
+export type PriceKeys =
   | "tcps_price_r13"
   | "tcps_price_r14"
   | "tcps_price_r15"
@@ -14,7 +14,7 @@ type PriceKeys =
   | "tcps_price_r22"
   | "tcps_price_trade_in";
 
-type TireRow = {
+export type TireRow = {
   id: number;
   tcps_ub_id: string;
   tcps_tb_name: string;
@@ -25,57 +25,40 @@ type TireRow = {
 };
 
 type Props = {
-  userUbId: string; // tcps_ub_id ของ user ปัจจุบัน
+  rows: TireRow[];
+  userUbId: string;
   validatePrice: (field: string, value: number) => boolean;
 };
 
-const UserTireTable: React.FC<Props> = ({ userUbId, validatePrice }) => {
-  const [rows, setRows] = useState<TireRow[]>([]);
+const UserTireTable: React.FC<Props> = ({ rows, userUbId, validatePrice }) => {
   const [edited, setEdited] = useState<{
     [key: string]: "valid" | "invalid" | "edited";
   }>({});
 
-  // fetch data จาก API
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch(
-          `http://localhost:3000/api/user_tire?userUbId=${userUbId}`,
-          { credentials: "include" }
-        );
-        if (!res.ok) throw new Error("Failed to fetch data");
-
-        const data: TireRow[] = await res.json();
-        setRows(data); // ตอนนี้ได้เฉพาะ row ของ user ปัจจุบัน
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchData();
-  }, [userUbId]);
+  // กรอง row ที่ตรงกับ userUbId
+  const filteredRows = useMemo(
+    () => rows.filter((row) => row.tcps_ub_id === userUbId),
+    [rows, userUbId]
+  );
 
   const handleEdit = (
     rowIndex: number,
     field: keyof TireRow,
     value: number
   ) => {
-    const newRows = [...rows];
-
+    const newRows = [...filteredRows];
     if (isPriceKey(field)) {
-      newRows[rowIndex][field] = Number(value);
+      newRows[rowIndex][field] = value;
     }
 
     const key = `${rowIndex}-${field}`;
-    if (!validatePrice(field as string, Number(value))) {
+    if (!validatePrice(field as string, value)) {
       setEdited((prev) => ({ ...prev, [key]: "invalid" }));
     } else {
       setEdited((prev) => ({ ...prev, [key]: "edited" }));
     }
-
-    setRows(newRows);
   };
 
-  // helper function
   function isPriceKey(key: keyof TireRow): key is PriceKeys {
     return key.startsWith("tcps_price_");
   }
@@ -102,15 +85,15 @@ const UserTireTable: React.FC<Props> = ({ userUbId, validatePrice }) => {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, rowIndex) => (
+          {filteredRows.map((row, rowIndex) => (
             <tr key={row.id}>
               <td>{row.tcps_tb_name}</td>
               <td>{row.tcps_tbi_name}</td>
               <td>{row.tcps_sidewall_name}</td>
-              {Object.keys(row)
-                .filter((k): k is PriceKeys => k.includes("price"))
+              {(Object.keys(row) as (keyof TireRow)[])
+                .filter((k) => isPriceKey(k))
                 .map((field) => {
-                  const key = `${rowIndex}-${field}`;
+                  const key = `${row.id}-${field}`; // ใช้ row.id + field เป็น key
                   let cellClass = "";
                   if (edited[key] === "invalid")
                     cellClass += ` ${styles.invalid}`;
@@ -118,16 +101,12 @@ const UserTireTable: React.FC<Props> = ({ userUbId, validatePrice }) => {
                     cellClass += ` ${styles.edited}`;
 
                   return (
-                    <td key={field} className={cellClass}>
+                    <td key={key} className={cellClass}>
                       <input
                         type="number"
                         value={row[field] ?? ""}
                         onChange={(e) =>
-                          handleEdit(
-                            rowIndex,
-                            field as keyof TireRow,
-                            Number(e.target.value)
-                          )
+                          handleEdit(rowIndex, field, Number(e.target.value))
                         }
                         className={styles.inputCell}
                       />

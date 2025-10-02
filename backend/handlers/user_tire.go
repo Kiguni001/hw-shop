@@ -36,6 +36,7 @@ func GetUserTireByUserID(db *gorm.DB) fiber.Handler {
         // เช็คว่า userID ถูกส่งมาหรือไม่
         if userID != "" {
             query = query.Where("tcps_ub_id = ?", userID)
+			println("UserID:", userID)
         }
 
         if err := query.Find(&tires).Error; err != nil {
@@ -175,4 +176,3 @@ func UpdateUserTires(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{"message": "update success", "data": updated})
 }
-

@@ -2,7 +2,7 @@ package routes
 
 import (
 	"Kiguni001/hw-shop/handlers"
-
+	
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -17,6 +17,10 @@ func SetupRoutes(app *fiber.App) {
 	app.Post("/api/company", handlers.CreateCompany)
 
 	app.Post("/api/user", handlers.CreateCompanyFull)
+
+	// User
+	// app.Get("/api/user/me", handlers.GetCurrentUser(db))
+
 
 
 	// UserTire

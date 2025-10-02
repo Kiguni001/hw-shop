@@ -1,7 +1,11 @@
 import React from "react";
 import styles from "../styles/SearchBar.module.css";
 
-const SearchBar: React.FC = () => {
+interface SearchBarProps {
+  rowCount: number; // ✅ จำนวน row ที่จะแสดง
+}
+
+const SearchBar: React.FC<SearchBarProps> = ({ rowCount }) => {
   const handleSaveClick = () => {
     // 👉 ส่ง Event ไปให้ TireTable
     window.dispatchEvent(new Event("SAVE_TIRES"));
@@ -34,7 +38,7 @@ const SearchBar: React.FC = () => {
         <button className={styles.brandBtn}>ค้นหาด้วย Brand</button>
 
         {/* แสดงจำนวน */}
-        <span className={styles.itemCount}>แสดงทั้งหมด xxxx รายการ</span>
+        <span className={styles.itemCount}>แสดงทั้งหมด {rowCount} รายการ</span>
 
         {/* ปุ่มบันทึก */}
         <button className={styles.saveBtn} onClick={handleSaveClick}>

@@ -4,6 +4,7 @@ import "time"
 
 type User struct {
 	ID        uint   `json:"id" gorm:"primaryKey"`
+	CompanyName string `json:"company_name"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Phone     string `json:"phone"`

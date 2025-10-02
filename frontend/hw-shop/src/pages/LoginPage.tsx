@@ -21,8 +21,7 @@ const LoginPage: React.FC = () => {
       const response = await fetch("http://localhost:3000/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // ส่ง cookie/session ไปเก็บ session
-        body: JSON.stringify({ username, password }), // ✅ แก้เป็น username
+        body: JSON.stringify({ username, password }),
       });
 
       if (!response.ok) {
@@ -30,9 +29,13 @@ const LoginPage: React.FC = () => {
         throw new Error(errorData.error || "เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
       }
 
-      // login สำเร็จ
       const data = await response.json();
       console.log("เข้าสู่ระบบสำเร็จ:", data);
+
+      // เก็บ token และ role ใน sessionStorage
+      sessionStorage.setItem("token", data.token);
+      sessionStorage.setItem("role", data.role);
+      sessionStorage.setItem("userUbId", data.tcps_ub_id);
 
       // redirect ตาม role
       if (data.role === "admin") {
