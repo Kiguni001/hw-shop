@@ -20,7 +20,7 @@ func SetupRoutes(app *fiber.App) {
 
 
 	// UserTire
-	api.Get("/user/tires", handlers.GetUserTires)
+	// api.Get("/user/tires", handlers.GetUserTires)
 	api.Post("/user/tires/update", handlers.UpdateUserTires)
 
 	// Sync / History

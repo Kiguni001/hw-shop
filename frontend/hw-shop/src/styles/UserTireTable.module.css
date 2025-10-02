@@ -1,7 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100..900&display=swap");
 
 .tableContainer {
-  max-height: 500px; /* ปรับความสูงตามต้องการ */
+  max-height: 600px; /* ปรับความสูงตามต้องการ */
   overflow-y: auto; /* ให้สามารถเลื่อนใน container ได้ */
   overflow-x: auto;
   border-radius: 0.5rem;
@@ -30,6 +30,10 @@
   border: 1px solid #d1d5db;
   padding: 0.5rem;
   text-align: center;
+
+  /* ปรับ border */
+  border-bottom: 2px solid #ddd;
+  border-top: none; /* ✅ กันเส้นเกินตอนเลื่อน */
 }
 
 .table td {

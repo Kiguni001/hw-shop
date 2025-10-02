@@ -7,7 +7,6 @@
 .searchContainer {
   align-items: center;
   gap: 16px; /* ระยะระหว่าง search zone กับปุ่ม/ข้อความ */
-  padding: 0 2.4% 0 2%;
   width: 100%;
   box-sizing: border-box;
   padding-top: 1%;
@@ -95,6 +94,7 @@
   align-items: center;
   gap: 12px; /* ระยะห่างระหว่าง brandBtn กับ itemCount */
   width: 100%; /* ให้กินเต็มบรรทัด */
+  padding-bottom: 10px;
 }
 
 .brandBtn {

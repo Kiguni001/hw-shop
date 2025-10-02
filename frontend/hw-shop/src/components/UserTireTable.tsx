@@ -39,16 +39,14 @@ const UserTireTable: React.FC<Props> = ({ userUbId, validatePrice }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/user_tire", {
-          credentials: "include",
-        });
+        const res = await fetch(
+          `http://localhost:3000/api/user_tire?userUbId=${userUbId}`,
+          { credentials: "include" }
+        );
         if (!res.ok) throw new Error("Failed to fetch data");
 
         const data: TireRow[] = await res.json();
-
-        // filter ให้เหลือเฉพาะ row ที่ tcps_ub_id ตรงกับ user
-        const filtered = data.filter((row) => row.tcps_ub_id === userUbId);
-        setRows(filtered);
+        setRows(data); // ตอนนี้ได้เฉพาะ row ของ user ปัจจุบัน
       } catch (err) {
         console.error(err);
       }

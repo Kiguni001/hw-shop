@@ -99,8 +99,8 @@
 .Zone3 {
   background-color: #ffffff;
   flex-grow: 1;
-  padding: 20px;
   overflow-y: hidden;
+  padding: 0px 40px;
 }
 
 /* User Info */

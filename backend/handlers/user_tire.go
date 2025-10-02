@@ -5,20 +5,60 @@ import (
 	"Kiguni001/hw-shop/database"
 	"Kiguni001/hw-shop/models"
 	"Kiguni001/hw-shop/services"
+	"gorm.io/gorm"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-// ดึง user_tire ของ user
-func GetUserTires(c *fiber.Ctx) error {
-	sess, _ := Store.Get(c)
-	tcpsUbID := sess.Get("tcps_ub_id").(string)
+// GetUserTireByUserID ดึงเฉพาะ row ของ user ที่กำหนด
+func GetUserTireByUserID(db *gorm.DB) fiber.Handler {
+    return func(c *fiber.Ctx) error {
+        userID := c.Query("tcps_ub_id") // ดึงค่าจาก query string
 
-	var tires []models.UserTire
-	database.DB.Where("tcps_ub_id = ?", tcpsUbID).Find(&tires)
+        var tires []models.UserTire
+        query := db.Select([]string{
+            "tcps_tb_name",
+            "tcps_tbi_name",
+            "tcps_sidewall_name",
+            "tcps_price_r13",
+            "tcps_price_r14",
+            "tcps_price_r15",
+            "tcps_price_r16",
+            "tcps_price_r17",
+            "tcps_price_r18",
+            "tcps_price_r19",
+            "tcps_price_r20",
+            "tcps_price_r21",
+            "tcps_price_r22",
+            "tcps_price_trade_in",
+        })
 
-	return c.JSON(fiber.Map{"data": tires})
+        // เช็คว่า userID ถูกส่งมาหรือไม่
+        if userID != "" {
+            query = query.Where("tcps_ub_id = ?", userID)
+        }
+
+        if err := query.Find(&tires).Error; err != nil {
+            return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+        }
+
+        return c.JSON(tires)
+    }
 }
+
+
+
+
+// // ดึง user_tire ของ user
+// func GetUserTires(c *fiber.Ctx) error {
+// 	sess, _ := Store.Get(c)
+// 	tcpsUbID := sess.Get("tcps_ub_id").(string)
+
+// 	var tires []models.UserTire
+// 	database.DB.Where("tcps_ub_id = ?", tcpsUbID).Find(&tires)
+
+// 	return c.JSON(fiber.Map{"data": tires})
+// }
 
 // Update ราคาทั้งก้อน
 func UpdateUserTires(c *fiber.Ctx) error {

@@ -8,6 +8,8 @@ import (
 )
 
 func UserTireRoutes(app *fiber.App, db *gorm.DB) {
-    app.Get("/api/user_tire", handlers.GetUserTirePrices)
-    // app.Post("/api/user_tire/save", handlers.SaveUserTireRecords(db))
+    // endpoint เดียว ครอบคลุมทั้ง "ทั้งหมด" และ "กรองตาม user"
+    app.Get("/api/user_tire", handlers.GetUserTireByUserID(db))
+
+    app.Post("/api/user_tire/save", handlers.SaveUserTireRecords(db))
 }

@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/joho/godotenv"
@@ -26,15 +25,17 @@ func main() {
 	app := fiber.New()
 
 	// ✅ เปิด CORS
-    app.Use(cors.New(cors.Config{
-        AllowOrigins: "http://localhost:5173",
-        AllowHeaders: "Origin, Content-Type, Accept",
-        AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
-        AllowCredentials: true,
-    }))
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://localhost:5173",
+		AllowHeaders:     "Origin, Content-Type, Accept",
+		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
+		AllowCredentials: true,
+	}))
 
 	// Routes
 	routes.SetupRoutes(app)
+
+	// ส่ง database.DB ไปยัง route ของ UserTire
 	routes.UserTireRoutes(app, database.DB)
 
 	port := os.Getenv("PORT")
