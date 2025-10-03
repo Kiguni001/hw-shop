@@ -3,7 +3,7 @@ package models
 import "time"
 
 type UserTire struct {
-	ID               uint    `gorm:"primaryKey"`
+	ID 				 uint 	 `gorm:"primaryKey" json:"id"` // ✅ เพิ่ม json tag
     TcpsID           string  `json:"tcps_id"`
     TcpsUbID         string  `json:"tcps_ub_id"`
     TcpsTbName       string  `json:"tcps_tb_name"`

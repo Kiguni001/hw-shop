@@ -19,9 +19,11 @@ func main() {
 	}
 
 	// Connect DB
+	
 	database.ConnectDB()
 	database.Migrate()
 
+	
 	app := fiber.New()
 
 	// ✅ เปิด CORS

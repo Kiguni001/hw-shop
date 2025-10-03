@@ -21,4 +21,7 @@ func UserTireRoutes(app *fiber.App, db *gorm.DB) {
 	
 	app.Get("/api/company/:id", handlers.GetCompanyByID(db))
 
+
+	
+
 }

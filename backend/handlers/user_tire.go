@@ -17,6 +17,7 @@ func GetUserTireByUserID(db *gorm.DB) fiber.Handler {
 
         var tires []models.UserTire
         query := db.Select([]string{
+    		"id", // เพิ่ม id ให้แต่ละ row
             "tcps_tb_name",
             "tcps_tbi_name",
             "tcps_sidewall_name",
@@ -51,15 +52,17 @@ func GetUserTireByUserID(db *gorm.DB) fiber.Handler {
 
 
 // // ดึง user_tire ของ user
-// func GetUserTires(c *fiber.Ctx) error {
-// 	sess, _ := Store.Get(c)
-// 	tcpsUbID := sess.Get("tcps_ub_id").(string)
+func GetUserTires(db *gorm.DB) fiber.Handler {
+    return func(c *fiber.Ctx) error {
+        var tires []models.UserTire
+        if err := db.Select("*").Find(&tires).Error; err != nil {
+            return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+        }
+        return c.JSON(tires)
+    }
+}
 
-// 	var tires []models.UserTire
-// 	database.DB.Where("tcps_ub_id = ?", tcpsUbID).Find(&tires)
 
-// 	return c.JSON(fiber.Map{"data": tires})
-// }
 
 // Update ราคาทั้งก้อน
 func UpdateUserTires(c *fiber.Ctx) error {

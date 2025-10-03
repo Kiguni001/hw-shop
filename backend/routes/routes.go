@@ -2,6 +2,9 @@ package routes
 
 import (
 	"Kiguni001/hw-shop/handlers"
+	"Kiguni001/hw-shop/database"
+
+	
 	
 	"github.com/gofiber/fiber/v2"
 )
@@ -24,7 +27,7 @@ func SetupRoutes(app *fiber.App) {
 
 
 	// UserTire
-	// api.Get("/user/tires", handlers.GetUserTires)
+	api.Get("/user/tires", handlers.GetUserTires(database.DB))
 	api.Post("/user/tires/update", handlers.UpdateUserTires)
 
 	// Sync / History

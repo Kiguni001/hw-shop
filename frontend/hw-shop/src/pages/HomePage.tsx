@@ -4,6 +4,7 @@ import logo from "../assets/icons/logo.png";
 import SearchBar from "../components/SearchBar";
 import UserTireTable from "../components/UserTireTable";
 import type { TireRow } from "../components/UserTireTable";
+import type { PriceKeys } from "../components/UserTireTable";
 
 interface UserData {
   first_name: string;
@@ -79,6 +80,11 @@ const HomePage: React.FC = () => {
         if (!res.ok) throw new Error("Failed to fetch user tire data");
         const data: TireRow[] = await res.json();
         console.log("✅ User tire data loaded:", data);
+
+        // ⭐ เพิ่ม log นี้
+        console.log("🔍 First row:", data[0]);
+        console.log("🔍 First row ID:", data[0]?.id);
+
         setUserTireData(data);
       } catch (err) {
         console.error("❌ Error fetching user tire:", err);
@@ -86,6 +92,18 @@ const HomePage: React.FC = () => {
     };
     fetchUserTire();
   }, [user?.tcps_ub_id]);
+
+  const handleUpdateTireRow = (
+    rowId: number,
+    field: PriceKeys,
+    value: number
+  ) => {
+    setUserTireData((prevData) =>
+      prevData.map((row) =>
+        row.id === rowId ? { ...row, [field]: value } : row
+      )
+    );
+  };
 
   return (
     <div className={styles.homePageContainer}>
@@ -152,6 +170,7 @@ const HomePage: React.FC = () => {
             rows={userTireData}
             userUbId={user?.tcps_ub_id ?? ""}
             validatePrice={(field, value) => value >= 0 && value < 5000}
+            onUpdateRow={handleUpdateTireRow} // ⭐ เพิ่มบรรทัดนี้
           />
         </div>
       </div>
