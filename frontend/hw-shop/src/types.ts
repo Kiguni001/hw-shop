@@ -14,6 +14,7 @@ export type PriceKeys =
 
 export type TireRow = {
   id: number;
+  tcps_id: string;
   tcps_ub_id: string;
   tcps_tb_name: string;
   tcps_tbi_name: string;

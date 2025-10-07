@@ -19,6 +19,8 @@ func UserTireRoutes(app *fiber.App, db *gorm.DB) {
 
     app.Post("/api/user_tire/save", handlers.SaveUserTireRecords(db))
 	
+	app.Put("/api/user_tire/:tcps_id", handlers.UpdateUserTireHandler)
+
 	app.Get("/api/company/:id", handlers.GetCompanyByID(db))
 
 

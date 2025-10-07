@@ -18,6 +18,8 @@ func GetUserTireByUserID(db *gorm.DB) fiber.Handler {
         var tires []models.UserTire
         query := db.Select([]string{
     		"id", // เพิ่ม id ให้แต่ละ row
+			"tcps_id",
+			"tcps_ub_id",
             "tcps_tb_name",
             "tcps_tbi_name",
             "tcps_sidewall_name",
@@ -30,6 +32,7 @@ func GetUserTireByUserID(db *gorm.DB) fiber.Handler {
             "tcps_price_r19",
             "tcps_price_r20",
             "tcps_price_r21",
+
             "tcps_price_r22",
             "tcps_price_trade_in",
         })
@@ -178,4 +181,38 @@ func UpdateUserTires(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"message": "update success", "data": updated})
+}
+
+// UpdateUserTireHandler : PUT /api/user_tire/:tcps_id
+func UpdateUserTireHandler(c *fiber.Ctx) error {
+    tcpsID := c.Params("tcps_id")
+    if tcpsID == "" {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": "tcps_id required",
+        })
+    }
+
+    var input models.UserTire
+    if err := c.BodyParser(&input); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": "invalid JSON",
+        })
+    }
+
+    db := database.DB
+
+    var tire models.UserTire
+    if err := db.Where("tcps_id = ?", tcpsID).First(&tire).Error; err != nil {
+        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+            "error": "record not found",
+        })
+    }
+
+    // อัปเดต fields ที่รับมา
+    db.Model(&tire).Updates(input)
+
+    return c.Status(fiber.StatusOK).JSON(fiber.Map{
+        "message": "Update successful",
+        "tcps_id": tcpsID,
+    })
 }

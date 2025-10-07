@@ -48,27 +48,7 @@ const HomePage: React.FC = () => {
     fetchUserData();
   }, []);
 
-  // 2️⃣ Fetch ข้อมูลบริษัท หลังจาก user โหลดแล้ว
-  // useEffect(() => {
-  //   const fetchCompany = async () => {
-  //     if (!user?.tcps_ub_id) return;
-  //     try {
-  //       const res = await fetch(
-  //         `http://localhost:3000/api/company/${user.tcps_ub_id}`,
-  //         { credentials: "include" }
-  //       );
-  //       if (!res.ok) throw new Error("Failed to fetch company data");
-  //       const data: CompanyData = await res.json();
-  //       console.log("✅ Company data loaded:", data);
-  //       setCompany(data);
-  //     } catch (err) {
-  //       console.error("❌ Error fetching company:", err);
-  //     }
-  //   };
-  //   fetchCompany();
-  // }, [user?.tcps_ub_id]);
-
-  // 3️⃣ Fetch ตารางยางเฉพาะ user
+  // 2️⃣ Fetch ตารางยางเฉพาะ user
   useEffect(() => {
     const fetchUserTire = async () => {
       if (!user?.tcps_ub_id) return;
@@ -80,11 +60,6 @@ const HomePage: React.FC = () => {
         if (!res.ok) throw new Error("Failed to fetch user tire data");
         const data: TireRow[] = await res.json();
         console.log("✅ User tire data loaded:", data);
-
-        // ⭐ เพิ่ม log นี้
-        console.log("🔍 First row:", data[0]);
-        console.log("🔍 First row ID:", data[0]?.id);
-
         setUserTireData(data);
       } catch (err) {
         console.error("❌ Error fetching user tire:", err);
@@ -93,17 +68,110 @@ const HomePage: React.FC = () => {
     fetchUserTire();
   }, [user?.tcps_ub_id]);
 
+  // ✅ อัปเดตข้อมูลใน state เมื่อมีการแก้ไขช่องราคา
   const handleUpdateTireRow = (
-    rowId: number,
+    tcpsId: string | undefined,
     field: PriceKeys,
     value: number
   ) => {
-    setUserTireData((prevData) =>
-      prevData.map((row) =>
-        row.id === rowId ? { ...row, [field]: value } : row
+    if (!tcpsId) return; // ป้องกัน undefined
+    setUserTireData((prev) =>
+      prev.map((row) =>
+        row.tcps_id === tcpsId ? { ...row, [field]: value, status: 2 } : row
       )
     );
   };
+
+  // ✅ ฟังก์ชันบันทึกข้อมูลที่ถูกแก้ไข (PUT เฉพาะแถวที่มี status = 2)
+  // ใน HomePage.tsx
+  // ใน HomePage.tsx
+  // ใน HomePage.tsx
+  const handleSaveEditedRows = async (editedRows: TireRow[]) => {
+    try {
+      if (editedRows.length === 0) {
+        alert("ไม่มีข้อมูลที่ถูกแก้ไข");
+        return;
+      }
+
+      for (const row of editedRows) {
+        if (!row.tcps_id) continue;
+
+        console.log("📤 ส่งข้อมูลไปอัปเดต API:", row);
+
+        const res = await fetch(
+          `http://localhost:3000/api/user_tire/${row.tcps_id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(row),
+          }
+        );
+
+        if (!res.ok) {
+          throw new Error(`อัปเดตไม่สำเร็จสำหรับ ${row.tcps_id}`);
+        }
+
+        console.log(`✅ อัปเดตสำเร็จสำหรับ ${row.tcps_id}`);
+      }
+
+      // หลังจากอัปเดตเสร็จ รีเซ็ต editedFlags (ใน UserTireTable) และ/หรือ local state
+      setUserTireData((prev) =>
+        prev.map((row) => {
+          const editedRow = editedRows.find((r) => r.tcps_id === row.tcps_id);
+          return editedRow ? { ...row } : row;
+        })
+      );
+
+      alert("✅ บันทึกข้อมูลสำเร็จลง API ของคุณแล้ว!");
+    } catch (err) {
+      console.error("❌ Error saving:", err);
+      alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+    }
+  };
+
+
+  // 🧩 อัปเดตเฉพาะ API ของคุณ (ไม่ส่งไปภายนอก)
+  // const handleSave = async () => {
+  //   try {
+  //     const rowsToUpdate = userTireData.filter((row) => row.status === 2);
+  //     if (rowsToUpdate.length === 0) {
+  //       alert("ไม่มีข้อมูลที่ต้องบันทึก");
+  //       return;
+  //     }
+
+  //     console.log("📤 เตรียมส่งข้อมูลอัปเดตไปยัง API ของคุณ:", rowsToUpdate);
+
+  //     // 🔹 อัปเดตแถวที่ถูกแก้ไขแต่ละรายการ
+  //     for (const row of rowsToUpdate) {
+  //       if (!row.tcps_id) continue;
+
+  //       const res = await fetch(
+  //         `http://localhost:3000/api/user_tire/${row.tcps_id}`,
+  //         {
+  //           method: "PUT",
+  //           headers: { "Content-Type": "application/json" },
+  //           body: JSON.stringify(row),
+  //         }
+  //       );
+
+  //       if (!res.ok) {
+  //         throw new Error(`อัปเดตข้อมูลไม่สำเร็จสำหรับ ID ${row.tcps_id}`);
+  //       }
+
+  //       console.log(`✅ อัปเดตข้อมูลสำเร็จสำหรับ ${row.tcps_id}`);
+  //     }
+
+  //     // 🔹 หลังจากอัปเดตเสร็จ รีเซ็ต status กลับเป็น 1
+  //     setUserTireData((prev) =>
+  //       prev.map((row) => (row.status === 2 ? { ...row, status: 1 } : row))
+  //     );
+
+  //     alert("✅ บันทึกข้อมูลสำเร็จลงฐานข้อมูลของคุณแล้ว!");
+  //   } catch (err) {
+  //     console.error("❌ Error saving:", err);
+  //     alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+  //   }
+  // };
 
   return (
     <div className={styles.homePageContainer}>
@@ -166,12 +234,42 @@ const HomePage: React.FC = () => {
 
         <div className={styles.Zone3}>
           <SearchBar rowCount={userTireData.length} />
+
           <UserTireTable
             rows={userTireData}
             userUbId={user?.tcps_ub_id ?? ""}
             validatePrice={(field, value) => value >= 0 && value < 5000}
-            onUpdateRow={handleUpdateTireRow} // ⭐ เพิ่มบรรทัดนี้
+            onUpdateCell={handleUpdateTireRow}
+            onSaveEditedRows={handleSaveEditedRows} // ✅ ส่ง callback ให้ table
           />
+
+          {/* ✅ ปุ่มบันทึก (ใหม่) */}
+          <div style={{ textAlign: "right", marginTop: "16px" }}>
+            <button
+              style={{
+                background: "#007bff",
+                color: "white",
+                border: "none",
+                padding: "8px 16px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontWeight: "bold",
+              }}
+              onClick={() => {
+                // ดึงแถวที่แก้ไขจาก table ผ่าน state ของ HomePage
+                const editedRows = userTireData.filter(
+                  (row) => row.status === 2
+                );
+                if (editedRows.length > 0) {
+                  handleSaveEditedRows(editedRows); // ✅ ส่ง array ไป
+                } else {
+                  alert("ไม่มีข้อมูลที่ถูกแก้ไข");
+                }
+              }}
+            >
+              💾 บันทึกการแก้ไข
+            </button>
+          </div>
         </div>
       </div>
     </div>
