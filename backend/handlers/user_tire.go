@@ -17,9 +17,9 @@ func GetUserTireByUserID(db *gorm.DB) fiber.Handler {
 
         var tires []models.UserTire
         query := db.Select([]string{
-    		"id", // เพิ่ม id ให้แต่ละ row
-			"tcps_id",
-			"tcps_ub_id",
+            "id", // เพิ่ม id ให้แต่ละ row
+            "tcps_id",
+            "tcps_ub_id",
             "tcps_tb_name",
             "tcps_tbi_name",
             "tcps_sidewall_name",
@@ -32,24 +32,32 @@ func GetUserTireByUserID(db *gorm.DB) fiber.Handler {
             "tcps_price_r19",
             "tcps_price_r20",
             "tcps_price_r21",
-
             "tcps_price_r22",
             "tcps_price_trade_in",
+            "status", // ✅ เพิ่ม field status ให้ถูก select มาด้วย
         })
 
         // เช็คว่า userID ถูกส่งมาหรือไม่
         if userID != "" {
             query = query.Where("tcps_ub_id = ?", userID)
-			println("UserID:", userID)
+            println("UserID:", userID)
         }
 
         if err := query.Find(&tires).Error; err != nil {
             return c.Status(500).JSON(fiber.Map{"error": err.Error()})
         }
 
+        // ✅ ตั้ง default status = 1 ถ้าเป็น 0 (หรือยังไม่ถูกกำหนด)
+        for i := range tires {
+            if tires[i].Status == 0 {
+                tires[i].Status = 1
+            }
+        }
+
         return c.JSON(tires)
     }
 }
+
 
 
 
@@ -215,4 +223,40 @@ func UpdateUserTireHandler(c *fiber.Ctx) error {
         "message": "Update successful",
         "tcps_id": tcpsID,
     })
+}
+
+// UpdateUserTiresFromAPI รับ JSON จาก API เซิฟเวอร์
+func UpdateUserTiresFromAPI(c *fiber.Ctx) error {
+	var input []models.UserTire
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid input"})
+	}
+
+	db := database.DB
+
+	for _, r := range input {
+		// อัปเดตเฉพาะ row ที่ tcps_id + tcps_ub_id ตรงกัน
+		db.Model(&models.UserTire{}).
+			Where("tcps_id = ? AND tcps_ub_id = ?", r.TcpsID, r.TcpsUbID).
+			Updates(models.UserTire{
+				TcpsPriceR13:     r.TcpsPriceR13,
+				TcpsPriceR14:     r.TcpsPriceR14,
+				TcpsPriceR15:     r.TcpsPriceR15,
+				TcpsPriceR16:     r.TcpsPriceR16,
+				TcpsPriceR17:     r.TcpsPriceR17,
+				TcpsPriceR18:     r.TcpsPriceR18,
+				TcpsPriceR19:     r.TcpsPriceR19,
+				TcpsPriceR20:     r.TcpsPriceR20,
+				TcpsPriceR21:     r.TcpsPriceR21,
+				TcpsPriceR22:     r.TcpsPriceR22,
+				TcpsPriceTradeIn: r.TcpsPriceTradeIn,
+				UpdatedAt:        r.UpdatedAt,
+				Status:           1, // รีเซ็ต status เป็น 1 หลังอัปเดต
+			})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "update from API success",
+		"count":   len(input),
+	})
 }

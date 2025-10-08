@@ -21,4 +21,5 @@ type UserTire struct {
 	TcpsPriceR22     float64 `json:"tcps_price_r22"`
 	TcpsPriceTradeIn float64 `json:"tcps_price_trade_in"`
 	UpdatedAt        time.Time
+	Status            int        `gorm:"default:1" json:"status"` // 1 = ปกติ, 2 = รออัปเดต API
 }

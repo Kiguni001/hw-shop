@@ -22,6 +22,20 @@ export type TireRow = {
   tcps_tb_name: string;
   tcps_tbi_name: string;
   tcps_sidewall_name: string;
+
+  tcps_price_r13: number;
+  tcps_price_r14: number;
+  tcps_price_r15: number;
+  tcps_price_r16: number;
+  tcps_price_r17: number;
+  tcps_price_r18: number;
+  tcps_price_r19: number;
+  tcps_price_r20: number;
+  tcps_price_r21: number;
+  tcps_price_r22: number;
+  tcps_price_trade_in: number;
+
+  updatedAt: string;
   status?: number; // 0 = ปกติ, 2 = รออัพเดต API
 } & {
   [K in PriceKeys]?: number;
