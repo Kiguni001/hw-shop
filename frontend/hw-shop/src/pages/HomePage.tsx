@@ -22,11 +22,11 @@ const HomePage: React.FC = () => {
   const [company] = useState<CompanyData | null>(null);
   const [userTireData, setUserTireData] = useState<TireRow[]>([]);
 
-  type ApiServerRow = {
-    tcps_id: string;
-    tcps_ub_id: string;
-    updated_at: string;
-  };
+  // type ApiServerRow = {
+  //   tcps_id: string;
+  //   tcps_ub_id: string;
+  //   updated_at: string;
+  // };
 
   // 1️⃣ Fetch ข้อมูลผู้ใช้
   useEffect(() => {
@@ -123,6 +123,9 @@ const HomePage: React.FC = () => {
           }
         );
 
+        const serverJson = await res.json(); // <-- ต้องอยู่ตรงนี้
+        console.log("📥 Response จาก API เซิฟเวอร์:", serverJson);
+
         if (!res.ok) {
           throw new Error(`อัปเดตไม่สำเร็จสำหรับ ${row.tcps_id}`);
         }
@@ -145,7 +148,6 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // ...existing code...
   const handleSave = async () => {
     const editedRows = userTireData.filter((row) => row.status === 2);
     if (editedRows.length === 0) {
@@ -154,41 +156,16 @@ const HomePage: React.FC = () => {
     }
 
     try {
-      const resp = await sendUpdatedPricesToServer(
-        user?.tcps_ub_id ?? "",
+      const updated = await sendUpdatedPricesToServer(
+        user?.tcps_ub_id ?? "", // user_id และ branch_id
         editedRows
       );
-      console.log("Updated rows:", resp);
-
-      type RawApiRow = {
-        tcps_id?: string;
-        tcps_ub_id?: string;
-        updated_at?: string;
-        // เพิ่ม field อื่น ๆ ถ้ามี
-      };
-
-      const updatedRows: ApiServerRow[] = Array.isArray(resp.data_list)
-        ? (resp.data_list as RawApiRow[])
-            .filter(
-              (r) =>
-                typeof r.updated_at === "string" &&
-                typeof r.tcps_id === "string" &&
-                typeof r.tcps_ub_id === "string"
-            )
-            .map((r) => ({
-              tcps_id: r.tcps_id!,
-              tcps_ub_id: r.tcps_ub_id!,
-              updated_at: r.updated_at!,
-            }))
-        : [];
 
       setUserTireData((prev) =>
         prev.map((row) => {
-          const updated = updatedRows.find(
-            (r) => r.tcps_id === row.tcps_id && r.tcps_ub_id === row.tcps_ub_id
-          );
-          return updated
-            ? { ...row, status: 1, updatedAt: updated.updated_at }
+          const match = updated.find((u) => u.tcps_id === row.tcps_id);
+          return match
+            ? { ...row, status: 1, updatedAt: match.updated_at }
             : row;
         })
       );
@@ -196,10 +173,11 @@ const HomePage: React.FC = () => {
       alert("อัปเดตจาก API เซิฟเวอร์เรียบร้อยแล้ว");
     } catch (err) {
       console.error(err);
-      alert("เกิดข้อผิดพลาดในการอัปเดตจาก API เซิฟเวอร์");
+      alert(
+        "เกิดข้อผิดพลาด: " + (err instanceof Error ? err.message : String(err))
+      );
     }
   };
-  // ...existing code...
 
   return (
     <div className={styles.homePageContainer}>

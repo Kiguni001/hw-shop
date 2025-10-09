@@ -210,7 +210,7 @@ func UpdateUserTireHandler(c *fiber.Ctx) error {
     db := database.DB
 
     var tire models.UserTire
-    if err := db.Where("tcps_id = ?", tcpsID).First(&tire).Error; err != nil {
+    if err := db.Where("tcps_id = ? AND tcps_ub_id = ?", tcpsID, input.TcpsUbID).First(&tire).Error; err != nil {
         return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
             "error": "record not found",
         })
@@ -227,7 +227,10 @@ func UpdateUserTireHandler(c *fiber.Ctx) error {
 
 // UpdateUserTiresFromAPI รับ JSON จาก API เซิฟเวอร์
 func UpdateUserTiresFromAPI(c *fiber.Ctx) error {
-	var input []models.UserTire
+	var input []struct {
+		TcpsID    string `json:"tcps_id"`
+		UpdatedAt string `json:"updated_at"`
+	}
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid input"})
 	}
@@ -235,23 +238,12 @@ func UpdateUserTiresFromAPI(c *fiber.Ctx) error {
 	db := database.DB
 
 	for _, r := range input {
-		// อัปเดตเฉพาะ row ที่ tcps_id + tcps_ub_id ตรงกัน
+		// อัปเดตเฉพาะ updated_at และ status ของ row ที่ tcps_id ตรงกัน
 		db.Model(&models.UserTire{}).
-			Where("tcps_id = ? AND tcps_ub_id = ?", r.TcpsID, r.TcpsUbID).
-			Updates(models.UserTire{
-				TcpsPriceR13:     r.TcpsPriceR13,
-				TcpsPriceR14:     r.TcpsPriceR14,
-				TcpsPriceR15:     r.TcpsPriceR15,
-				TcpsPriceR16:     r.TcpsPriceR16,
-				TcpsPriceR17:     r.TcpsPriceR17,
-				TcpsPriceR18:     r.TcpsPriceR18,
-				TcpsPriceR19:     r.TcpsPriceR19,
-				TcpsPriceR20:     r.TcpsPriceR20,
-				TcpsPriceR21:     r.TcpsPriceR21,
-				TcpsPriceR22:     r.TcpsPriceR22,
-				TcpsPriceTradeIn: r.TcpsPriceTradeIn,
-				UpdatedAt:        r.UpdatedAt,
-				Status:           1, // รีเซ็ต status เป็น 1 หลังอัปเดต
+			Where("tcps_id = ?", r.TcpsID).
+			Updates(map[string]interface{}{
+				"updated_at": r.UpdatedAt,
+				"status":     1,
 			})
 	}
 
