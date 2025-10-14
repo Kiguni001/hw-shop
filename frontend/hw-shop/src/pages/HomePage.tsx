@@ -5,7 +5,6 @@ import SearchBar from "../components/SearchBar";
 import UserTireTable from "../components/UserTireTable";
 import type { TireRow } from "../components/UserTireTable";
 import type { PriceKeys } from "../components/UserTireTable";
-// import { sendUpdatedPricesToServer } from "../services/api_service";
 import userIcon from "../assets/icons/user.png";
 import saleIcon from "../assets/icons/sale.png";
 import exitIcon from "../assets/icons/esc.png";
@@ -117,7 +116,7 @@ const HomePage: React.FC = () => {
           }
         );
 
-        const serverJson = await res.json(); // <-- ต้องอยู่ตรงนี้
+        const serverJson = await res.json();
         console.log("📥 Response จาก API เซิฟเวอร์:", serverJson);
 
         if (!res.ok) {
@@ -127,7 +126,6 @@ const HomePage: React.FC = () => {
         console.log(`✅ อัปเดตสำเร็จสำหรับ ${row.tcps_id}`);
       }
 
-      // หลังจากอัปเดตเสร็จ รีเซ็ต editedFlags (ใน UserTireTable) และ/หรือ local state
       setUserTireData((prev) =>
         prev.map((row) => {
           const editedRow = editedRows.find((r) => r.tcps_id === row.tcps_id);
@@ -141,37 +139,6 @@ const HomePage: React.FC = () => {
       alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล");
     }
   };
-
-  // const handleSave = async () => {
-  //   const editedRows = userTireData.filter((row) => row.status === 2);
-  //   if (editedRows.length === 0) {
-  //     alert("ไม่มีข้อมูลที่ถูกแก้ไข");
-  //     return;
-  //   }
-
-  //   try {
-  //     const updated = await sendUpdatedPricesToServer(
-  //       user?.tcps_ub_id ?? "", // user_id และ branch_id
-  //       editedRows
-  //     );
-
-  //     setUserTireData((prev) =>
-  //       prev.map((row) => {
-  //         const match = updated.find((u) => u.tcps_id === row.tcps_id);
-  //         return match
-  //           ? { ...row, status: 1, updatedAt: match.updated_at }
-  //           : row;
-  //       })
-  //     );
-
-  //     alert("อัปเดตจาก API เซิฟเวอร์เรียบร้อยแล้ว");
-  //   } catch (err) {
-  //     console.error(err);
-  //     alert(
-  //       "เกิดข้อผิดพลาด: " + (err instanceof Error ? err.message : String(err))
-  //     );
-  //   }
-  // };
 
   // ✅ handleSyncToServer — ฟังก์ชันใหม่ (ส่งไป API เซิร์ฟเวอร์)
   const handleSyncToServer = async (editedRows: TireRow[]) => {
@@ -206,12 +173,22 @@ const HomePage: React.FC = () => {
   };
 
   // ✅ handleSaveAndSync — ฟังก์ชันรวม (ใหม่)
-  const handleSaveAndSync = async (editedRows: TireRow[]) => {
+  const handleSaveAndSync = async () => {
+    const editedRows = userTireData.filter((row) => row.status === 2);
     console.log("🚀 เริ่มบันทึกและอัปเดตข้อมูลพร้อมกัน...");
     await handleSaveEditedRows(editedRows); // อัปเดตในระบบเรา
     await handleSyncToServer(editedRows); // ส่งไปยัง API เซิร์ฟเวอร์กลาง
     console.log("🎉 การบันทึกและซิงก์ข้อมูลเสร็จสมบูรณ์");
   };
+
+  // ✅ ฟัง event จาก SearchBar เพื่อบันทึกข้อมูล
+  useEffect(() => {
+    const handleSaveEvent = () => {
+      handleSaveAndSync();
+    };
+    window.addEventListener("SAVE_TIRES", handleSaveEvent);
+    return () => window.removeEventListener("SAVE_TIRES", handleSaveEvent);
+  }, [userTireData, user]);
 
   return (
     <div className={styles.homePageContainer}>
@@ -269,20 +246,7 @@ const HomePage: React.FC = () => {
             validatePrice={(field, value) => value >= 0 && value < 5000}
             onUpdateCell={handleUpdateTireRow}
           />
-
-          {/* ✅ ปุ่มบันทึก (ใหม่) */}
-          <div style={{ textAlign: "right", marginTop: "16px" }}>
-            <button
-              onClick={() => {
-                const editedRows = userTireData.filter(
-                  (row) => row.status === 2
-                );
-                handleSaveAndSync(editedRows);
-              }}
-            >
-              💾 บันทึก + ส่งไป API เซิร์ฟเวอร์
-            </button>
-          </div>
+          {/* ✅ ลบปุ่มบันทึกใน Zone3 ออก */}
         </div>
       </div>
     </div>

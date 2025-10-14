@@ -16,8 +16,8 @@ export type PriceKeys =
   | "tcps_price_trade_in";
 
 export type TireRow = {
-  id?: number; // optional (kept for backward compat)
-  tcps_id?: string; // <-- เพิ่ม tcps_id
+  id?: number;
+  tcps_id?: string;
   tcps_ub_id: string;
   tcps_tb_name: string;
   tcps_tbi_name: string;
@@ -36,7 +36,7 @@ export type TireRow = {
   tcps_price_trade_in: number;
 
   updatedAt: string;
-  status?: number; // 0 = ปกติ, 2 = รออัพเดต API
+  status?: number;
 } & {
   [K in PriceKeys]?: number;
 };
@@ -50,7 +50,7 @@ type Props = {
     field: PriceKeys,
     value: number
   ) => void;
-  className?: string; // เพิ่มบรรทัดนี้
+  className?: string;
 };
 
 const UserTireTable: React.FC<Props> = ({
@@ -58,10 +58,8 @@ const UserTireTable: React.FC<Props> = ({
   validatePrice,
   onUpdateCell,
 }) => {
-  // state rows
   const [rows, setRows] = useState<TireRow[]>([]);
 
-  // ✅ เรียงแถวทุกครั้งที่ initialRows เปลี่ยน
   useEffect(() => {
     const sortedRows = [...initialRows].sort((a, b) => {
       const idA = Number(a.tcps_id ?? a.id ?? 0);
@@ -71,16 +69,13 @@ const UserTireTable: React.FC<Props> = ({
     setRows(sortedRows);
   }, [initialRows]);
 
-  // เก็บค่า input ที่แก้ไขแบบเฉพาะช่อง
   const [editedValues, setEditedValues] = useState<{
     [key: string]: number | string;
   }>({});
-  // status ของ cell (edited / invalid)
   const [editedFlags, setEditedFlags] = useState<{
     [key: string]: "valid" | "invalid" | "edited";
   }>({});
 
-  // ฟิลด์ราคา
   const priceFields: PriceKeys[] = [
     "tcps_price_r13",
     "tcps_price_r14",
@@ -95,14 +90,12 @@ const UserTireTable: React.FC<Props> = ({
     "tcps_price_trade_in",
   ];
 
-  // สร้าง key ของ cell
   const makeCellKey = (row: TireRow, rowIndex: number, field: PriceKeys) => {
     const idPart =
       row.tcps_id ?? (row.id !== undefined ? String(row.id) : `row${rowIndex}`);
     return `${idPart}-${rowIndex}-${field}`;
   };
 
-  // ✅ ฟังก์ชันแก้ไข row และเรียงอัตโนมัติ
   const handleChange = (
     row: TireRow,
     rowIndex: number,
@@ -111,19 +104,16 @@ const UserTireTable: React.FC<Props> = ({
   ) => {
     const cellKey = makeCellKey(row, rowIndex, field);
 
-    // เก็บค่า input
     setEditedValues((prev) => ({ ...prev, [cellKey]: rawValue }));
 
     const numValue = rawValue === "" ? 0 : Number(rawValue);
 
-    // validate และตั้ง flag
     if (!validatePrice(field, numValue)) {
       setEditedFlags((prev) => ({ ...prev, [cellKey]: "invalid" }));
     } else {
       setEditedFlags((prev) => ({ ...prev, [cellKey]: "edited" }));
     }
 
-    // อัพเดท row ใน state พร้อมเรียง
     setRows((prevRows) => {
       const updatedRows = prevRows.map((r) =>
         r.tcps_id === row.tcps_id ? { ...r, [field]: numValue } : r
@@ -136,11 +126,9 @@ const UserTireTable: React.FC<Props> = ({
       return updatedRows;
     });
 
-    // แจ้ง parent
     if (onUpdateCell) onUpdateCell(row.tcps_id, field, numValue);
   };
 
-  // ดึงค่า input
   const getDisplayedValue = (
     row: TireRow,
     rowIndex: number,
@@ -151,48 +139,21 @@ const UserTireTable: React.FC<Props> = ({
     return row[field] ?? "";
   };
 
-  // ดึง row ที่แก้ไข
-  const getEditedRows = (): TireRow[] => {
-    const editedRowIds = new Set<string>();
-    Object.entries(editedFlags).forEach(([key, flag]) => {
-      if (flag === "edited") {
-        const tcpsId = key.replace(/^-/, "").split("-")[0];
-        editedRowIds.add(tcpsId);
-      }
-    });
-    return rows.filter(
-      (r) => r.tcps_id && editedRowIds.has(r.tcps_id.replace(/^-/, ""))
-    );
-  };
+  // const getEditedRows = (): TireRow[] => {
+  //   const editedRowIds = new Set<string>();
+  //   Object.entries(editedFlags).forEach(([key, flag]) => {
+  //     if (flag === "edited") {
+  //       const tcpsId = key.replace(/^-/, "").split("-")[0];
+  //       editedRowIds.add(tcpsId);
+  //     }
+  //   });
+  //   return rows.filter(
+  //     (r) => r.tcps_id && editedRowIds.has(r.tcps_id.replace(/^-/, ""))
+  //   );
+  // };
 
-  // รวมกระบวนการบันทึกและ sync ออกเป็นฟังก์ชันใหม่
-  const handleSaveEditedRowsNew = async () => {
-    const editedRows = getEditedRows();
-    if (editedRows.length === 0) {
-      alert("ไม่มีข้อมูลที่ถูกแก้ไข");
-      return;
-    }
-
-    try {
-      console.log("🕓 เริ่มบันทึกข้อมูลที่แก้ไข...");
-
-      // 1️⃣ ส่งข้อมูลไป backend (localhost) ให้จัดการเอง
-      const res = await fetch("http://localhost:3000/api/sync_tires", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ editedRows }),
-      });
-
-      if (!res.ok) throw new Error("ไม่สามารถ sync ผ่าน backend ได้");
-      const result = await res.json();
-
-      console.log("✅ ตอบกลับจาก backend:", result);
-      alert("✅ บันทึกและอัปเดตข้อมูลเรียบร้อยแล้ว!");
-    } catch (error) {
-      console.error("❌ เกิดข้อผิดพลาดระหว่าง sync:", error);
-      alert("❌ เกิดข้อผิดพลาดระหว่าง sync ข้อมูล");
-    }
-  };
+  // ลบปุ่มบันทึกการเปลี่ยนแปลงและฟังก์ชัน handleSaveEditedRowsNew ออก
+  // ไม่กระทบฟังก์ชันอื่นที่ไม่เกี่ยวข้อง
 
   return (
     <div className={styles.tableContainer}>
@@ -277,9 +238,7 @@ const UserTireTable: React.FC<Props> = ({
           )}
         </tbody>
       </table>
-      <button className={styles.saveButton} onClick={handleSaveEditedRowsNew}>
-        💾 บันทึกการเปลี่ยนแปลง
-      </button>
+      {/* ปุ่มบันทึกการเปลี่ยนแปลงถูกลบออกแล้ว */}
     </div>
   );
 };
