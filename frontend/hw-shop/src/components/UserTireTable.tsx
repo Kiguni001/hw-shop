@@ -50,14 +50,13 @@ type Props = {
     field: PriceKeys,
     value: number
   ) => void;
-  onSaveEditedRows?: (rows: TireRow[]) => void; // ⭐ เพิ่ม prop ใหม่
+  className?: string; // เพิ่มบรรทัดนี้
 };
 
 const UserTireTable: React.FC<Props> = ({
   rows: initialRows,
   validatePrice,
   onUpdateCell,
-  onSaveEditedRows,
 }) => {
   // state rows
   const [rows, setRows] = useState<TireRow[]>([]);
@@ -166,6 +165,35 @@ const UserTireTable: React.FC<Props> = ({
     );
   };
 
+  // รวมกระบวนการบันทึกและ sync ออกเป็นฟังก์ชันใหม่
+  const handleSaveEditedRowsNew = async () => {
+    const editedRows = getEditedRows();
+    if (editedRows.length === 0) {
+      alert("ไม่มีข้อมูลที่ถูกแก้ไข");
+      return;
+    }
+
+    try {
+      console.log("🕓 เริ่มบันทึกข้อมูลที่แก้ไข...");
+
+      // 1️⃣ ส่งข้อมูลไป backend (localhost) ให้จัดการเอง
+      const res = await fetch("http://localhost:3000/api/sync_tires", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ editedRows }),
+      });
+
+      if (!res.ok) throw new Error("ไม่สามารถ sync ผ่าน backend ได้");
+      const result = await res.json();
+
+      console.log("✅ ตอบกลับจาก backend:", result);
+      alert("✅ บันทึกและอัปเดตข้อมูลเรียบร้อยแล้ว!");
+    } catch (error) {
+      console.error("❌ เกิดข้อผิดพลาดระหว่าง sync:", error);
+      alert("❌ เกิดข้อผิดพลาดระหว่าง sync ข้อมูล");
+    }
+  };
+
   return (
     <div className={styles.tableContainer}>
       <table className={styles.table}>
@@ -249,18 +277,8 @@ const UserTireTable: React.FC<Props> = ({
           )}
         </tbody>
       </table>
-      <button
-        className={styles.saveButton}
-        onClick={() => {
-          const editedRows = getEditedRows();
-          if (editedRows.length > 0) {
-            onSaveEditedRows?.(editedRows);
-          } else {
-            alert("ไม่มีข้อมูลที่ถูกแก้ไข");
-          }
-        }}
-      >
-        บันทึกการเปลี่ยนแปลง
+      <button className={styles.saveButton} onClick={handleSaveEditedRowsNew}>
+        💾 บันทึกการเปลี่ยนแปลง
       </button>
     </div>
   );

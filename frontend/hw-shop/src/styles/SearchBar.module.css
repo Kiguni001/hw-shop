@@ -131,6 +131,35 @@
   color: #ffffff;
 }
 
+/* ตารางและเนื้อหาใน Zone3 ให้ยืดหยุ่น */
+.UserTireTableWrapper {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: auto; /* ให้เลื่อนซ้ายขวาได้ */
+  overflow-y: visible;
+  /* padding: 0;  ถ้าต้องการ */
+}
+
+/* กำหนด min-width ให้ตาราง */
+.UserTireTable {
+  min-width: 900px; /* ปรับตามจำนวนคอลัมน์ที่ต้องการ */
+  width: max-content;
+}
+
+/* ช่องค้นหาและปุ่มบันทึก fix ขนาด */
+.SearchBar {
+  min-width: 300px;
+  max-width: 500px;
+  margin-bottom: 12px;
+}
+
+.SaveButton {
+  min-width: 120px;
+  max-width: 200px;
+}
+
 /* ปรับขนาดบนหน้าจอเล็ก */
 @media (max-width: 640px) {
   .searchContainer {

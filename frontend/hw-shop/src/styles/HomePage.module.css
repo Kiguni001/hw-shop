@@ -2,29 +2,18 @@
 
 .homePageContainer {
   display: flex;
-  height: 100vh; /* ครอบ viewport */
+  height: 100vh;
+  width: 100vw;
   font-family: "Noto Sans Thai", sans-serif;
-  width: 100vw; /* ให้กว้างเต็มจอ */
-  overflow: hidden; /* ปิดการเลื่อนทั้งแนวตั้งและแนวนอน */
-}
-
-/* ซ่อน scrollbar ในเบราว์เซอร์หลัก ๆ แต่ยังเลื่อนได้ */
-.noScrollbar {
-  /* Firefox */
-  scrollbar-width: none;
-  /* IE 10+ */
-  -ms-overflow-style: none;
-}
-
-/* Chrome, Safari, Edge (WebKit/Blink) */
-.noScrollbar::-webkit-scrollbar {
-  display: none;
+  overflow: hidden;
 }
 
 /* Sidebar */
 .BoxZone1 {
   background-color: #373330;
-  width: 6.25%;
+  width: 96px;
+  min-width: 96px;
+  max-width: 96px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -37,18 +26,20 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 30px;
+  padding-top: 24px;
 }
 
 .logoimg img {
-  width: 75%;
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
 }
 
 .line {
   border: none;
   height: 2px;
   background-color: #fff;
-  width: 60%;
+  width: 80px;
   margin: 20px 0;
   opacity: 0.5;
 }
@@ -64,43 +55,50 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 10px;
+  padding: 8px;
   font-size: 12px;
-  opacity: 0.8;
-  margin-bottom: 24px;
+  opacity: 0.85;
+  margin-bottom: 18px;
+  width: 100px;
 }
 
 .exitButton {
   position: absolute;
   bottom: 10px;
+  left: 10px;
+  width: 100px;
 }
 
 .profileButton img,
 .saleButton img,
 .exitButton img {
-  width: 30%;
-  padding-bottom: 6%;
+  width: 32px;
+  height: 32px;
+  margin-bottom: 6px;
+  object-fit: contain;
 }
 
 /* Main Content */
 .BoxZone2 {
-  width: calc(100% - 6.25%);
+  flex: 1;
   display: flex;
   flex-direction: column;
 }
 
 .Zone2 {
   background-color: #f8f8f8;
-  height: 11%;
+  height: 85px; /* Fix ความสูงใหม่ */
+  min-height: 85px; /* Fix ความสูงขั้นต่ำใหม่ */
+  max-height: 85px; /* Fix ความสูงสูงสุดใหม่ */
   box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
   z-index: 2;
 }
 
 .Zone3 {
   background-color: #ffffff;
-  flex-grow: 1;
-  overflow-y: hidden;
-  padding: 0px 40px;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0px 2vw;
 }
 
 /* User Info */
@@ -129,4 +127,13 @@
   font-weight: 500;
   color: #2c3e50;
   margin-top: 0px;
+}
+
+/* ซ่อน scrollbar ในเบราว์เซอร์หลัก ๆ แต่ยังเลื่อนได้ */
+.noScrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.noScrollbar::-webkit-scrollbar {
+  display: none;
 }

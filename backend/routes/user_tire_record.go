@@ -24,6 +24,13 @@ func UserTireRoutes(app *fiber.App, db *gorm.DB) {
 	app.Get("/api/company/:id", handlers.GetCompanyByID(db))
 
 
-	
+	api := app.Group("/api/user_tire")
 
+	api.Post("/sync/:user_id", func(c *fiber.Ctx) error {
+		return handlers.SyncUserTireHandler(c, db)
+	})
+
+    api.Post("/sync_tires", handlers.SyncTires)
+
+	
 }

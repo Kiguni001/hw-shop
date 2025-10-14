@@ -5,7 +5,10 @@ import SearchBar from "../components/SearchBar";
 import UserTireTable from "../components/UserTireTable";
 import type { TireRow } from "../components/UserTireTable";
 import type { PriceKeys } from "../components/UserTireTable";
-import { sendUpdatedPricesToServer } from "../services/api_service";
+// import { sendUpdatedPricesToServer } from "../services/api_service";
+import userIcon from "../assets/icons/user.png";
+import saleIcon from "../assets/icons/sale.png";
+import exitIcon from "../assets/icons/esc.png";
 
 interface UserData {
   first_name: string;
@@ -21,12 +24,6 @@ const HomePage: React.FC = () => {
   const [user, setUser] = useState<UserData | null>(null);
   const [company] = useState<CompanyData | null>(null);
   const [userTireData, setUserTireData] = useState<TireRow[]>([]);
-
-  // type ApiServerRow = {
-  //   tcps_id: string;
-  //   tcps_ub_id: string;
-  //   updated_at: string;
-  // };
 
   // 1️⃣ Fetch ข้อมูลผู้ใช้
   useEffect(() => {
@@ -99,9 +96,6 @@ const HomePage: React.FC = () => {
   };
 
   // ✅ ฟังก์ชันบันทึกข้อมูลที่ถูกแก้ไข (PUT เฉพาะแถวที่มี status = 2)
-  // ใน HomePage.tsx
-  // ใน HomePage.tsx
-  // ใน HomePage.tsx
   const handleSaveEditedRows = async (editedRows: TireRow[]) => {
     try {
       if (editedRows.length === 0) {
@@ -148,35 +142,75 @@ const HomePage: React.FC = () => {
     }
   };
 
-  const handleSave = async () => {
-    const editedRows = userTireData.filter((row) => row.status === 2);
-    if (editedRows.length === 0) {
-      alert("ไม่มีข้อมูลที่ถูกแก้ไข");
-      return;
-    }
+  // const handleSave = async () => {
+  //   const editedRows = userTireData.filter((row) => row.status === 2);
+  //   if (editedRows.length === 0) {
+  //     alert("ไม่มีข้อมูลที่ถูกแก้ไข");
+  //     return;
+  //   }
 
+  //   try {
+  //     const updated = await sendUpdatedPricesToServer(
+  //       user?.tcps_ub_id ?? "", // user_id และ branch_id
+  //       editedRows
+  //     );
+
+  //     setUserTireData((prev) =>
+  //       prev.map((row) => {
+  //         const match = updated.find((u) => u.tcps_id === row.tcps_id);
+  //         return match
+  //           ? { ...row, status: 1, updatedAt: match.updated_at }
+  //           : row;
+  //       })
+  //     );
+
+  //     alert("อัปเดตจาก API เซิฟเวอร์เรียบร้อยแล้ว");
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert(
+  //       "เกิดข้อผิดพลาด: " + (err instanceof Error ? err.message : String(err))
+  //     );
+  //   }
+  // };
+
+  // ✅ handleSyncToServer — ฟังก์ชันใหม่ (ส่งไป API เซิร์ฟเวอร์)
+  const handleSyncToServer = async (editedRows: TireRow[]) => {
     try {
-      const updated = await sendUpdatedPricesToServer(
-        user?.tcps_ub_id ?? "", // user_id และ branch_id
-        editedRows
-      );
+      if (!user) throw new Error("User not loaded");
 
-      setUserTireData((prev) =>
-        prev.map((row) => {
-          const match = updated.find((u) => u.tcps_id === row.tcps_id);
-          return match
-            ? { ...row, status: 1, updatedAt: match.updated_at }
-            : row;
-        })
-      );
+      const payload = {
+        user_id: user.tcps_ub_id,
+        data_update: editedRows.map((row) => ({
+          tcps_id: row.tcps_id,
+          updated_at: row.updatedAt || new Date().toISOString(),
+        })),
+      };
 
-      alert("อัปเดตจาก API เซิฟเวอร์เรียบร้อยแล้ว");
-    } catch (err) {
-      console.error(err);
-      alert(
-        "เกิดข้อผิดพลาด: " + (err instanceof Error ? err.message : String(err))
-      );
+      console.log("🔹 Payload ที่จะส่งไป API เซิร์ฟเวอร์:", payload);
+
+      const response = await fetch("https://example.com/api/update_price", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        console.log("✅ เซิร์ฟเวอร์ตอบกลับสำเร็จ:", result);
+      } else {
+        console.error("❌ เซิร์ฟเวอร์ตอบกลับล้มเหลว:", result);
+      }
+    } catch (error) {
+      console.error("❌ error handleSyncToServer:", error);
     }
+  };
+
+  // ✅ handleSaveAndSync — ฟังก์ชันรวม (ใหม่)
+  const handleSaveAndSync = async (editedRows: TireRow[]) => {
+    console.log("🚀 เริ่มบันทึกและอัปเดตข้อมูลพร้อมกัน...");
+    await handleSaveEditedRows(editedRows); // อัปเดตในระบบเรา
+    await handleSyncToServer(editedRows); // ส่งไปยัง API เซิร์ฟเวอร์กลาง
+    console.log("🎉 การบันทึกและซิงก์ข้อมูลเสร็จสมบูรณ์");
   };
 
   return (
@@ -192,33 +226,21 @@ const HomePage: React.FC = () => {
             className={styles.profileButton}
             onClick={() => alert("แก้ไขโปรไฟล์")}
           >
-            <img
-              src="/src/assets/icons/user.png"
-              alt="user icon"
-              className={styles.icon}
-            />
+            <img src={userIcon} alt="user icon" className={styles.icon} />
             <span>แก้ไขโปรไฟล์</span>
           </button>
           <button
             className={styles.saleButton}
             onClick={() => alert("จัดโปรโมชั่น")}
           >
-            <img
-              src="/src/assets/icons/sale.png"
-              alt="sale icon"
-              className={styles.icon}
-            />
+            <img src={saleIcon} alt="sale icon" className={styles.icon} />
             <span>จัดโปรโมชั่น</span>
           </button>
           <button
             className={styles.exitButton}
             onClick={() => alert("ออกจากระบบ")}
           >
-            <img
-              src="/src/assets/icons/esc.png"
-              alt="exit icon"
-              className={styles.icon}
-            />
+            <img src={exitIcon} alt="exit icon" className={styles.icon} />
             <span>ออกจากระบบ</span>
           </button>
         </div>
@@ -246,35 +268,19 @@ const HomePage: React.FC = () => {
             userUbId={user?.tcps_ub_id ?? ""}
             validatePrice={(field, value) => value >= 0 && value < 5000}
             onUpdateCell={handleUpdateTireRow}
-            onSaveEditedRows={handleSaveEditedRows} // ✅ ส่ง callback ให้ table
           />
 
           {/* ✅ ปุ่มบันทึก (ใหม่) */}
           <div style={{ textAlign: "right", marginTop: "16px" }}>
             <button
-              style={{
-                background: "#007bff",
-                color: "white",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: "bold",
+              onClick={() => {
+                const editedRows = userTireData.filter(
+                  (row) => row.status === 2
+                );
+                handleSaveAndSync(editedRows);
               }}
-              // onClick={() => {
-              //   // ดึงแถวที่แก้ไขจาก table ผ่าน state ของ HomePage
-              //   const editedRows = userTireData.filter(
-              //     (row) => row.status === 2
-              //   );
-              //   if (editedRows.length > 0) {
-              //     handleSaveEditedRows(editedRows); // ✅ ส่ง array ไป
-              //   } else {
-              //     alert("ไม่มีข้อมูลที่ถูกแก้ไข");
-              //   }
-              // }}
-              onClick={handleSave} // ✅ เรียกฟังก์ชัน handleSave ตรงๆ
             >
-              💾 บันทึกการแก้ไข
+              💾 บันทึก + ส่งไป API เซิร์ฟเวอร์
             </button>
           </div>
         </div>

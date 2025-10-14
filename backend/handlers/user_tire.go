@@ -252,3 +252,27 @@ func UpdateUserTiresFromAPI(c *fiber.Ctx) error {
 		"count":   len(input),
 	})
 }
+
+func SyncUserTireHandler(c *fiber.Ctx, db *gorm.DB) error {
+	userID := c.Params("user_id")
+
+	// 🔍 ดึงข้อมูลผู้ใช้จากฐานข้อมูล
+	var user models.User
+	if err := db.First(&user, userID).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "ไม่พบผู้ใช้ที่ระบุ",
+		})
+	}
+
+	// 🔁 เรียกใช้ฟังก์ชัน SyncUpdatedPrices จาก services
+	if err := services.SyncUpdatedPrices(user, db); err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error":  "เกิดข้อผิดพลาดระหว่าง Sync ข้อมูล",
+			"detail": err.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"status": "✅ sync เสร็จสมบูรณ์",
+	})
+}
