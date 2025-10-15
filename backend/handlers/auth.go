@@ -67,6 +67,7 @@ fmt.Println("Login user:", user.FirstName, "TcpsUbID:", user.TcpsUbID)
 	return c.JSON(fiber.Map{
 		"message":    "login success",
 		"role":       user.Role,
+		"user_id":    user.ID,         // ✅ เพิ่มบรรทัดนี้
 		"tcps_ub_id": user.TcpsUbID,
 		"token":      signedToken,
 	})

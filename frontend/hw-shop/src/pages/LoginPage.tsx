@@ -35,6 +35,7 @@ const LoginPage: React.FC = () => {
       // เก็บ token และ role ใน sessionStorage
       sessionStorage.setItem("token", data.token);
       sessionStorage.setItem("role", data.role);
+      sessionStorage.setItem("user_id", String(data.user_id)); // <-- เพิ่มบรรทัดนี้
       sessionStorage.setItem("userUbId", data.tcps_ub_id);
 
       // redirect ตาม role

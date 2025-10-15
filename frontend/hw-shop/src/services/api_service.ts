@@ -37,29 +37,27 @@ export const sendUpdatedPricesToServer = async (
   // sanitize branch_id (เอาแต่ตัวเลข)
   const branchId = String(userUbId ?? "").replace(/\D/g, "");
 
-  // เตรียม data_update ตามรูปแบบที่ API ต้องการ (ทุกค่าเป็น string)
+  // ควรรับ userId จริงจาก sessionStorage หรือ login response
+  const userId = sessionStorage.getItem("user_id") ?? branchId;
+
+  // เตรียม data_update (ไม่ต้องมี updated_at ถ้า API ไม่ต้องการ)
   const dataUpdateAll = rows
-    .map((r) => {
-      const tcpsUb = (r.tcps_ub_id ?? branchId ?? "")
-        .toString()
-        .replace(/\D/g, "");
-      return {
-        tcps_id: String(r.tcps_id ?? ""),
-        tcps_ub_id: tcpsUb,
-        tcps_price_r13: String(r.tcps_price_r13 ?? 0),
-        tcps_price_r14: String(r.tcps_price_r14 ?? 0),
-        tcps_price_r15: String(r.tcps_price_r15 ?? 0),
-        tcps_price_r16: String(r.tcps_price_r16 ?? 0),
-        tcps_price_r17: String(r.tcps_price_r17 ?? 0),
-        tcps_price_r18: String(r.tcps_price_r18 ?? 0),
-        tcps_price_r19: String(r.tcps_price_r19 ?? 0),
-        tcps_price_r20: String(r.tcps_price_r20 ?? 0),
-        tcps_price_r21: String(r.tcps_price_r21 ?? 0),
-        tcps_price_r22: String(r.tcps_price_r22 ?? 0),
-        tcps_price_trade_in: String(r.tcps_price_trade_in ?? 0),
-        updated_at: r.updatedAt || "0001-01-01T00:00:00Z",
-      };
-    })
+    .map((r) => ({
+      tcps_id: String(r.tcps_id ?? ""),
+      tcps_ub_id: String(r.tcps_ub_id ?? branchId ?? ""),
+      tcps_price_r13: String(r.tcps_price_r13 ?? 0),
+      tcps_price_r14: String(r.tcps_price_r14 ?? 0),
+      tcps_price_r15: String(r.tcps_price_r15 ?? 0),
+      tcps_price_r16: String(r.tcps_price_r16 ?? 0),
+      tcps_price_r17: String(r.tcps_price_r17 ?? 0),
+      tcps_price_r18: String(r.tcps_price_r18 ?? 0),
+      tcps_price_r19: String(r.tcps_price_r19 ?? 0),
+      tcps_price_r20: String(r.tcps_price_r20 ?? 0),
+      tcps_price_r21: String(r.tcps_price_r21 ?? 0),
+      tcps_price_r22: String(r.tcps_price_r22 ?? 0),
+      tcps_price_trade_in: String(r.tcps_price_trade_in ?? 0),
+      // ไม่ต้องมี updated_at
+    }))
     .filter((x) => x.tcps_id !== "" && x.tcps_ub_id !== "");
 
   if (dataUpdateAll.length === 0) return [];
@@ -71,8 +69,8 @@ export const sendUpdatedPricesToServer = async (
   // 🔁 ส่งแต่ละ batch ไป API เซิฟเวอร์
   for (const batch of batches) {
     const payload = {
-      user_id: branchId,
-      branch_id: branchId,
+      user_id: String(userId ?? ""),
+      branch_id: String(branchId ?? ""),
       Secure: "4fe24f2161c9a3e0825f54e2c26706e11396ff36",
       data_update: batch,
     };
@@ -96,6 +94,10 @@ export const sendUpdatedPricesToServer = async (
 
       // ✅ Log raw response จาก API เซิฟเวอร์
       const raw = await res.json();
+      if (raw.status !== "success") {
+        console.error("❌ API เซิร์ฟเวอร์ตอบกลับ error:", raw);
+        continue;
+      }
       console.log("📥 Response จาก API เซิฟเวอร์ (raw JSON):", raw);
 
       if (!res.ok) {

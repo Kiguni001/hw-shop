@@ -28,14 +28,14 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const userId = sessionStorage.getItem("userUbId");
-        console.log("User ID from sessionStorage:", userId);
-        if (!userId) throw new Error("ไม่พบ userId");
+        const tcpsUbId = sessionStorage.getItem("userUbId");
+        console.log("tcps_ub_id from sessionStorage:", tcpsUbId);
+        if (!tcpsUbId) throw new Error("ไม่พบ tcps_ub_id");
 
         const res = await fetch("http://localhost:3000/api/user/me", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tcps_ub_id: userId }),
+          body: JSON.stringify({ tcps_ub_id: tcpsUbId }),
         });
 
         if (!res.ok) throw new Error("Failed to fetch user data");
@@ -145,40 +145,99 @@ const HomePage: React.FC = () => {
     try {
       if (!user) throw new Error("User not loaded");
 
+      // เตรียมข้อมูล data_update ตามรูปแบบที่เซิร์ฟเวอร์ต้องการ
+      const data_update = editedRows.map((row) => ({
+        id: row.id,
+        tcps_id: String(row.tcps_id ?? ""),
+        tcps_ub_id: String(row.tcps_ub_id ?? ""),
+        tcps_price_r13: String(row.tcps_price_r13 ?? ""),
+        tcps_price_r14: String(row.tcps_price_r14 ?? ""),
+        tcps_price_r15: String(row.tcps_price_r15 ?? ""),
+        tcps_price_r16: String(row.tcps_price_r16 ?? ""),
+        tcps_price_r17: String(row.tcps_price_r17 ?? ""),
+        tcps_price_r18: String(row.tcps_price_r18 ?? ""),
+        tcps_price_r19: String(row.tcps_price_r19 ?? ""),
+        tcps_price_r20: String(row.tcps_price_r20 ?? ""),
+        tcps_price_r21: String(row.tcps_price_r21 ?? ""),
+        tcps_price_r22: String(row.tcps_price_r22 ?? ""),
+        tcps_price_trade_in: String(row.tcps_price_trade_in ?? ""),
+      }));
+
+      // const userId = sessionStorage.getItem("user_id"); // <-- user_id จริง
       const payload = {
-        user_id: user.tcps_ub_id,
-        data_update: editedRows.map((row) => ({
-          tcps_id: row.tcps_id,
-          updated_at: row.updatedAt || new Date().toISOString(),
-        })),
+        user_id: 16,
+        branch_id: String(user.tcps_ub_id ?? ""),
+        Secure: "4fe24f2161c9a3e0825f54e2c26706e11396ff36",
+        data_update: JSON.stringify(data_update),
       };
 
       console.log("🔹 Payload ที่จะส่งไป API เซิร์ฟเวอร์:", payload);
 
-      const response = await fetch("https://example.com/api/update_price", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      // แสดงค่า key ทั้ง 4 ตัวใน console
+      console.log("=== ตรวจสอบข้อมูลที่จะส่งไป API เซิร์ฟเวอร์ ===");
+      console.log("user_id:", payload.user_id);
+      console.log("branch_id:", payload.branch_id);
+      console.log("Secure:", payload.Secure);
+      console.log("data_update:", JSON.stringify(payload.data_update, null, 2));
+      console.log("=== จบการตรวจสอบข้อมูล ===");
+
+      const response = await fetch(
+        "http://192.168.1.249/hongwei/api/webapp_customer/update_listcode_price",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       const result = await response.json();
-      if (response.ok) {
+      if (
+        response.ok &&
+        result.status === "success" &&
+        Array.isArray(result.data)
+      ) {
         console.log("✅ เซิร์ฟเวอร์ตอบกลับสำเร็จ:", result);
+
+        setUserTireData((prev) =>
+          prev.map((row) => {
+            const updated = result.data.find(
+              (r: { tcps_id: string }) => r.tcps_id === String(row.tcps_id)
+            );
+            if (updated) {
+              return {
+                ...row,
+                updatedAt: updated.updated_at,
+                status: 1,
+              };
+            }
+            return row;
+          })
+        );
+        alert("✅ Sync กับ API เซิร์ฟเวอร์สำเร็จ!");
       } else {
         console.error("❌ เซิร์ฟเวอร์ตอบกลับล้มเหลว:", result);
+        alert(
+          `❌ Sync กับ API เซิร์ฟเวอร์ล้มเหลว\n${
+            typeof result === "object" && result.data
+              ? JSON.stringify(result.data)
+              : ""
+          }`
+        );
       }
     } catch (error) {
       console.error("❌ error handleSyncToServer:", error);
+      alert("❌ เกิดข้อผิดพลาดในการ sync ข้อมูล");
     }
   };
 
-  // ✅ handleSaveAndSync — ฟังก์ชันรวม (ใหม่)
   const handleSaveAndSync = async () => {
     const editedRows = userTireData.filter((row) => row.status === 2);
-    console.log("🚀 เริ่มบันทึกและอัปเดตข้อมูลพร้อมกัน...");
+    if (editedRows.length === 0) {
+      alert("ไม่มีข้อมูลที่ถูกแก้ไข");
+      return;
+    }
     await handleSaveEditedRows(editedRows); // อัปเดตในระบบเรา
-    await handleSyncToServer(editedRows); // ส่งไปยัง API เซิร์ฟเวอร์กลาง
-    console.log("🎉 การบันทึกและซิงก์ข้อมูลเสร็จสมบูรณ์");
+    await handleSyncToServer(editedRows); // ส่งไปยัง API เซิร์ฟเวอร์กลางและอัปเดต status/updatedAt
   };
 
   // ✅ ฟัง event จาก SearchBar เพื่อบันทึกข้อมูล
