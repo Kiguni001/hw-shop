@@ -92,3 +92,16 @@
 .table tr:hover td {
   background-color: #f3f4f6;
 }
+
+.activeCell {
+  outline: 3px solid #111;
+  outline-offset: -3px;
+  z-index: 2;
+  position: relative;
+  background: #fff !important;
+}
+.inputCell:focus {
+  background: #fff;
+  z-index: 3;
+  position: relative;
+}

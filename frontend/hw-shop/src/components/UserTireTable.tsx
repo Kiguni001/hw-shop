@@ -162,6 +162,7 @@ const UserTireTable: React.FC<Props> = ({
 
   // ลบปุ่มบันทึกการเปลี่ยนแปลงและฟังก์ชัน handleSaveEditedRowsNew ออก
   // ไม่กระทบฟังก์ชันอื่นที่ไม่เกี่ยวข้อง
+  const [activeCell, setActiveCell] = useState<string | null>(null);
 
   return (
     <div className={styles.tableContainer}>
@@ -221,15 +222,20 @@ const UserTireTable: React.FC<Props> = ({
                 {priceFields.map((field) => {
                   const cellKey = makeCellKey(row, rowIndex, field);
                   const flag = editedFlags[cellKey];
+                  const isActive = activeCell === cellKey;
                   const cellClass =
                     flag === "invalid"
                       ? styles.invalid
                       : flag === "edited"
                       ? styles.edited
-                      : "";
+                      : "" + (isActive ? " " + styles.activeCell : "");
 
                   return (
-                    <td key={cellKey} className={cellClass}>
+                    <td
+                      key={cellKey}
+                      className={cellClass}
+                      onDoubleClick={() => setActiveCell(cellKey)}
+                    >
                       <input
                         type="number"
                         value={getDisplayedValue(row, rowIndex, field)}
@@ -237,6 +243,8 @@ const UserTireTable: React.FC<Props> = ({
                           handleChange(row, rowIndex, field, e.target.value)
                         }
                         className={styles.inputCell}
+                        onFocus={() => setActiveCell(cellKey)}
+                        onBlur={() => setActiveCell(null)}
                       />
                     </td>
                   );
