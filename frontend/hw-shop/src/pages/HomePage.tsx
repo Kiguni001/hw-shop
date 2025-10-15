@@ -23,6 +23,7 @@ const HomePage: React.FC = () => {
   const [user, setUser] = useState<UserData | null>(null);
   const [company] = useState<CompanyData | null>(null);
   const [userTireData, setUserTireData] = useState<TireRow[]>([]);
+  const [resetEditFlagSignal, setResetEditFlagSignal] = useState(0);
 
   // 1️⃣ Fetch ข้อมูลผู้ใช้
   useEffect(() => {
@@ -213,6 +214,7 @@ const HomePage: React.FC = () => {
             return row;
           })
         );
+        setResetEditFlagSignal((prev) => prev + 1);
         alert("✅ Sync กับ API เซิร์ฟเวอร์สำเร็จ!");
       } else {
         console.error("❌ เซิร์ฟเวอร์ตอบกลับล้มเหลว:", result);
@@ -304,6 +306,7 @@ const HomePage: React.FC = () => {
             userUbId={user?.tcps_ub_id ?? ""}
             validatePrice={(field, value) => value >= 0 && value < 5000}
             onUpdateCell={handleUpdateTireRow}
+            resetEditFlagSignal={resetEditFlagSignal}
           />
           {/* ✅ ลบปุ่มบันทึกใน Zone3 ออก */}
         </div>

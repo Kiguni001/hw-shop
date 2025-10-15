@@ -51,13 +51,16 @@ type Props = {
     value: number
   ) => void;
   className?: string;
+  resetEditFlagSignal?: number; // <-- เพิ่มตรงนี้
 };
 
 const UserTireTable: React.FC<Props> = ({
   rows: initialRows,
   validatePrice,
   onUpdateCell,
+  resetEditFlagSignal, // <-- เพิ่มตรงนี้
 }) => {
+  // ...existing code...
   const [rows, setRows] = useState<TireRow[]>([]);
 
   useEffect(() => {
@@ -67,8 +70,13 @@ const UserTireTable: React.FC<Props> = ({
       return idA - idB;
     });
     setRows(sortedRows);
-  }, [initialRows]);
+  }, [initialRows]); // <--- ตรงนี้สังเกตเฉพาะ initialRows
 
+  useEffect(() => {
+    setEditedFlags({});
+    setEditedValues({});
+  }, [resetEditFlagSignal]); // <--- ตรงนี้ reset เฉพาะ flags/values
+  // ...existing code...
   const [editedValues, setEditedValues] = useState<{
     [key: string]: number | string;
   }>({});
