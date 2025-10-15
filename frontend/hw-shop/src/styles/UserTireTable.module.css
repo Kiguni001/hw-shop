@@ -105,3 +105,16 @@
   z-index: 3;
   position: relative;
 }
+
+/* ซ่อน spinner ของ input type="number" ในทุก browser */
+.inputCell::-webkit-outer-spin-button,
+.inputCell::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.inputCell[type="number"] {
+  appearance: textfield; /* มาตรฐาน */
+  -webkit-appearance: none; /* Chrome, Safari, Edge */
+  -moz-appearance: textfield; /* Firefox */
+}
