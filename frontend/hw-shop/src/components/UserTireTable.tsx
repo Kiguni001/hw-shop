@@ -1,6 +1,7 @@
 // src/components/UserTireTable.tsx
 import React, { useState, useEffect } from "react";
 import styles from "../styles/UserTireTable.module.css";
+import SetPriceButton from "./SetPriceButton";
 
 export type PriceKeys =
   | "tcps_price_r13"
@@ -163,6 +164,10 @@ const UserTireTable: React.FC<Props> = ({
   // ลบปุ่มบันทึกการเปลี่ยนแปลงและฟังก์ชัน handleSaveEditedRowsNew ออก
   // ไม่กระทบฟังก์ชันอื่นที่ไม่เกี่ยวข้อง
   const [activeCell, setActiveCell] = useState<string | null>(null);
+  const [activeCellRow, setActiveCellRow] = useState<TireRow | null>(null);
+  const [activeCellField, setActiveCellField] = useState<PriceKeys | null>(
+    null
+  );
 
   return (
     <div className={styles.tableContainer}>
@@ -234,7 +239,11 @@ const UserTireTable: React.FC<Props> = ({
                     <td
                       key={cellKey}
                       className={cellClass}
-                      onDoubleClick={() => setActiveCell(cellKey)}
+                      onDoubleClick={() => {
+                        setActiveCell(cellKey);
+                        setActiveCellRow(row);
+                        setActiveCellField(field);
+                      }}
                     >
                       <input
                         type="number"
@@ -243,7 +252,11 @@ const UserTireTable: React.FC<Props> = ({
                           handleChange(row, rowIndex, field, e.target.value)
                         }
                         className={styles.inputCell}
-                        onFocus={() => setActiveCell(cellKey)}
+                        onFocus={() => {
+                          setActiveCell(cellKey);
+                          setActiveCellRow(row);
+                          setActiveCellField(field);
+                        }}
                         onBlur={() => setActiveCell(null)}
                       />
                     </td>
@@ -254,7 +267,38 @@ const UserTireTable: React.FC<Props> = ({
           )}
         </tbody>
       </table>
-      {/* ปุ่มบันทึกการเปลี่ยนแปลงถูกลบออกแล้ว */}
+
+      {activeCell && activeCellRow && activeCellField && (
+        <SetPriceButton
+          row={activeCellRow}
+          // field={activeCellField}
+          // value={activeCellRow[activeCellField] ?? ""}
+          onRound100={() => {
+            // ปัดเต็มร้อย
+            const newValue =
+              Math.ceil(Number(activeCellRow[activeCellField] ?? 0) / 100) *
+              100;
+            handleChange(
+              activeCellRow,
+              rows.findIndex((r) => r.tcps_id === activeCellRow.tcps_id),
+              activeCellField,
+              String(newValue)
+            );
+          }}
+          onRound50={() => {
+            // ปัดเต็มห้าสิบ
+            const val = Number(activeCellRow[activeCellField] ?? 0);
+            const newValue = Math.ceil(val / 50) * 50;
+            handleChange(
+              activeCellRow,
+              rows.findIndex((r) => r.tcps_id === activeCellRow.tcps_id),
+              activeCellField,
+              String(newValue)
+            );
+          }}
+          onExit={() => setActiveCell(null)}
+        />
+      )}
     </div>
   );
 };

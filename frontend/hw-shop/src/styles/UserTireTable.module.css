@@ -100,11 +100,11 @@
   position: relative;
   background: #fff !important;
 }
-.inputCell:focus {
+/* .inputCell:focus {
   background: #fff;
   z-index: 3;
   position: relative;
-}
+} */
 
 /* ซ่อน spinner ของ input type="number" ในทุก browser */
 .inputCell::-webkit-outer-spin-button,

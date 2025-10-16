@@ -1,0 +1,73 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100..900&display=swap");
+
+.capsuleBar {
+  position: fixed;
+  left: 50%;
+  bottom: 16px; /* ลดระยะห่างจากขอบล่าง */
+  transform: translateX(-50%);
+  z-index: 3000;
+  display: flex;
+  gap: 0;
+  background: #fff;
+  border-radius: 24px; /* ลดความโค้ง */
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  padding: 6px 12px; /* ลด padding */
+  align-items: stretch;
+  font-family: "Noto Sans Thai", sans-serif;
+}
+
+.info,
+.action,
+.icon {
+  min-width: 60px; /* ลดความกว้าง */
+  font-size: 14px; /* ลดขนาดตัวหนังสือ */
+  font-weight: normal; /* ไม่ต้องปรับหนา */
+  color: #222;
+  padding: 0 8px; /* ลด padding */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px; /* ลดความสูง */
+  font-family: "Noto Sans Thai", sans-serif;
+  background: none;
+  border: none;
+}
+
+.action {
+  background: #f5f5f5;
+  border-radius: 12px; /* ลดความโค้ง */
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0 6px; /* ลด padding */
+  height: 28px; /* ลดความสูง */
+}
+
+.action img {
+  width: 18px;
+  height: 18px;
+}
+
+.action:hover {
+  background: #e0e0e0;
+}
+
+.icon {
+  font-size: 18px; /* ลดขนาด icon */
+  cursor: pointer;
+  padding: 0 6px;
+  border-radius: 12px;
+  height: 28px;
+}
+
+.capsuleBar > *:not(:last-child) {
+  border-right: 1px solid #e0e0e0; /* ลดความหนาเส้นคั่น */
+}
+
+.actionGroup {
+  display: flex;
+  align-items: center;
+}
+
+.actionGroup > *:not(:last-child) {
+  border-right: 1px solid #e0e0e0;
+}
