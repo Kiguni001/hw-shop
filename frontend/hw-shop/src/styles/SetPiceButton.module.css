@@ -1,73 +1,157 @@
+/* ...existing code... */
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100..900&display=swap");
+
+/* ขนาดมาตรฐานสำหรับปุ่ม/ไอคอน ให้ทุกปุ่มมีขนาดเท่ากัน */
+:root {
+  --capsule-padding-vertical: 6px;
+  --capsule-padding-horizontal: 12px;
+  --icon-size: 36px; /* ขนาดปุ่ม/คอนเทนเนอร์ไอคอน (ทั้งปุ่มปัด 100/50 และปุ่ม exit) */
+  --info-height: 36px; /* ความสูงของช่องข้อมูล (ให้เท่ากับปุ่ม) */
+  --info-min-width: 64px; /* กำหนดความกว้างขั้นต่ำของ .info (ปรับได้) */
+}
 
 .capsuleBar {
   position: fixed;
   left: 50%;
-  bottom: 16px; /* ลดระยะห่างจากขอบล่าง */
+  bottom: 16px;
   transform: translateX(-50%);
   z-index: 3000;
   display: flex;
   gap: 0;
-  background: #fff;
-  border-radius: 24px; /* ลดความโค้ง */
+  background: #cccccc;
+  border-radius: 24px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  padding: 6px 12px; /* ลด padding */
-  align-items: stretch;
+  padding: var(--capsule-padding-vertical) var(--capsule-padding-horizontal);
+  align-items: center;
   font-family: "Noto Sans Thai", sans-serif;
 }
 
+/* พื้นฐานสำหรับช่องข้อมูล และปุ่มทั้งหมดใน capsuleBar */
 .info,
 .action,
 .icon {
-  min-width: 60px; /* ลดความกว้าง */
-  font-size: 14px; /* ลดขนาดตัวหนังสือ */
-  font-weight: normal; /* ไม่ต้องปรับหนา */
-  color: #222;
-  padding: 0 8px; /* ลด padding */
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 28px; /* ลดความสูง */
-  font-family: "Noto Sans Thai", sans-serif;
+  height: var(--info-height);
+  line-height: 1;
+  text-align: center;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   background: none;
   border: none;
+  padding: 0;
 }
 
+/* ให้ช่องข้อมูลมีความกว้างเล็กน้อย แต่ความสูงเท่าปุ่ม */
+.info {
+  min-width: var(--info-min-width);
+  padding: 0 10px;
+  font-size: 14px;
+  color: #222;
+  border-radius: 6px;
+}
+
+/* ปุ่มทั่วไป (ถ้ายังมีใช้) - ขนาดเท่ากับไอคอน */
 .action {
-  background: #f5f5f5;
-  border-radius: 12px; /* ลดความโค้ง */
+  width: var(--icon-size);
+  height: var(--icon-size);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: background 0.2s;
-  padding: 0 6px; /* ลด padding */
-  height: 28px; /* ลดความสูง */
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 0;
 }
 
-.action img {
-  width: 18px;
-  height: 18px;
-}
-
-.action:hover {
-  background: #e0e0e0;
-}
-
+/* ปุ่มไอคอน: ทำให้ทุกปุ่มมีขนาดเท่ากัน */
 .icon {
-  font-size: 18px; /* ลดขนาด icon */
+  width: var(--icon-size);
+  height: var(--icon-size);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* ป้องกันรูปไอคอนล้นออก */
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
   cursor: pointer;
-  padding: 0 6px;
-  border-radius: 12px;
-  height: 28px;
+  border-radius: 6px;
+  transition: background 0.12s, transform 0.06s;
 }
 
+/* รูปภายในปุ่ม ให้ขยายเต็มปุ่ม แต่รักษาสัดส่วน */
+.icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* ใช้ contain เพื่อไม่ให้รูปถูกครอป */
+  display: block;
+  pointer-events: none;
+}
+
+/* hover effect เบา ๆ (ไม่เปลี่ยนขนาดปุ่ม) */
+.icon:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* ให้ปุ่มสุดท้าย (exit) มีขนาดเหมือนปุ่มอื่น — ถ้ามี override เก่าให้ลบ/override */
+.actionGroup .icon:last-child {
+  width: var(--icon-size) !important;
+  height: var(--icon-size) !important;
+}
+
+/* เอา override เก่า/transform ออก เพื่อให้ขนาดสม่ำเสมอ */
+.actionGroup > .icon:nth-of-type(1),
+.actionGroup > .icon:nth-of-type(2) {
+  width: var(--icon-size) !important;
+  height: var(--icon-size) !important;
+}
+.actionGroup > .icon:nth-of-type(1) img,
+.actionGroup > .icon:nth-of-type(2) img {
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+}
+
+/* เส้นคั่นระหว่างรายการภายใน capsuleBar (คงไว้) */
 .capsuleBar > *:not(:last-child) {
-  border-right: 1px solid #e0e0e0; /* ลดความหนาเส้นคั่น */
+  border-right: 1px solid #e0e0e0;
 }
 
 .actionGroup {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
 .actionGroup > *:not(:last-child) {
-  border-right: 1px solid #e0e0e0;
+  border-right: none;
+}
+
+/* ปิดเอฟเฟ็กต์เอาต์ไลน์ของปุ่มเวลาโฟกัส/คลิก */
+.icon:focus,
+.icon:active,
+.action:focus,
+.action:active {
+  outline: none;
+  box-shadow: none;
+}
+
+/* ...existing code... */
+
+/* ปรับขนาดภาพเฉพาะปุ่ม "ออกจากโหมดแก้ไข" (ปุ่มสุดท้าย) */
+.actionGroup .icon:last-child img {
+  width: 18px; /* เปลี่ยนเป็นขนาดที่ต้องการ */
+  height: 18px; /* เปลี่ยนเป็นขนาดที่ต้องการ */
+  object-fit: contain;
+}
+
+.icon img,
+.actionGroup .icon img {
+  -webkit-filter: grayscale(1) brightness(0) invert(1);
+  filter: grayscale(1) brightness(0) invert(1);
 }
