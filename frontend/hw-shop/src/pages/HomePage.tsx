@@ -3,6 +3,7 @@ import styles from "../styles/HomePage.module.css";
 import logo from "../assets/icons/logo.png";
 import SearchBar from "../components/SearchBar";
 import UserTireTable from "../components/UserTireTable";
+import ConfirmEditModal from "../components/ConfirmEditModal";
 import type { TireRow } from "../components/UserTireTable";
 import type { PriceKeys } from "../components/UserTireTable";
 import userIcon from "../assets/icons/user.png";
@@ -19,11 +20,31 @@ interface CompanyData {
   company_name: string;
 }
 
+// Types for confirm modal rows
+type ModalChange = {
+  field: PriceKeys;
+  original: number;
+  current: number;
+};
+
+type ModalRow = {
+  tcps_id?: string;
+  tcps_tb_name: string;
+  tcps_tbi_name: string;
+  tcps_sidewall_name?: string;
+  changes: ModalChange[];
+};
+
 const HomePage: React.FC = () => {
   const [user, setUser] = useState<UserData | null>(null);
   const [company] = useState<CompanyData | null>(null);
   const [userTireData, setUserTireData] = useState<TireRow[]>([]);
   const [resetEditFlagSignal, setResetEditFlagSignal] = useState(0);
+  const [originalUserTireData, setOriginalUserTireData] = useState<TireRow[]>(
+    []
+  );
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [modalRows, setModalRows] = useState<ModalRow[]>([]);
 
   // 1️⃣ Fetch ข้อมูลผู้ใช้
   useEffect(() => {
@@ -63,15 +84,11 @@ const HomePage: React.FC = () => {
         );
         if (!res.ok) throw new Error("Failed to fetch user tire data");
         const data: TireRow[] = await res.json();
-        console.log("✅ User tire data loaded:", data);
 
-        // normalize: ให้แน่ใจว่าแต่ละ row มี status เป็น 1 หากไม่มี
-        const normalized = data.map((r) => ({
-          ...r,
-          status: r.status ?? 1,
-        }));
-
+        const normalized = data.map((r) => ({ ...r, status: r.status ?? 1 }));
         setUserTireData(normalized);
+        // keep deep copy as original for diff
+        setOriginalUserTireData(JSON.parse(JSON.stringify(normalized)));
       } catch (err) {
         console.error("❌ Error fetching user tire:", err);
       }
@@ -242,14 +259,76 @@ const HomePage: React.FC = () => {
     await handleSyncToServer(editedRows); // ส่งไปยัง API เซิร์ฟเวอร์กลางและอัปเดต status/updatedAt
   };
 
-  // ✅ ฟัง event จาก SearchBar เพื่อบันทึกข้อมูล
+  // ✅ ฟัง event จาก SearchBar เพื่อเตรียม modal ก่อนบันทึก
   useEffect(() => {
     const handleSaveEvent = () => {
-      handleSaveAndSync();
+      // prepare edited rows and show modal
+      const editedRows = userTireData.filter((row) => row.status === 2);
+      if (editedRows.length === 0) {
+        alert("ไม่มีข้อมูลที่ถูกแก้ไข");
+        return;
+      }
+
+      // build modalRows with changed fields only
+      const fields: PriceKeys[] = [
+        "tcps_price_r13",
+        "tcps_price_r14",
+        "tcps_price_r15",
+        "tcps_price_r16",
+        "tcps_price_r17",
+        "tcps_price_r18",
+        "tcps_price_r19",
+        "tcps_price_r20",
+        "tcps_price_r21",
+        "tcps_price_r22",
+        "tcps_price_trade_in",
+      ];
+
+      const rowsForModal = editedRows
+        .map((r) => {
+          const original = originalUserTireData.find(
+            (o) => o.tcps_id === r.tcps_id
+          );
+          const changes = fields
+            .map((f) => {
+              const origVal = original ? Number(original[f] ?? 0) : 0;
+              const curVal = Number(r[f] ?? 0);
+              if (origVal !== curVal)
+                return { field: f, original: origVal, current: curVal };
+              return null;
+            })
+            .filter(Boolean) as {
+            field: PriceKeys;
+            original: number;
+            current: number;
+          }[];
+          return {
+            tcps_id: r.tcps_id,
+            tcps_tb_name: r.tcps_tb_name,
+            tcps_tbi_name: r.tcps_tbi_name,
+            tcps_sidewall_name: r.tcps_sidewall_name,
+            changes,
+          };
+        })
+        .filter((x) => x.changes && x.changes.length > 0);
+
+      if (rowsForModal.length === 0) {
+        alert("ไม่มีการเปลี่ยนแปลงจริง ๆ");
+        return;
+      }
+
+      setModalRows(rowsForModal);
+      setConfirmModalOpen(true);
     };
+
     window.addEventListener("SAVE_TIRES", handleSaveEvent);
     return () => window.removeEventListener("SAVE_TIRES", handleSaveEvent);
-  }, [userTireData, user]);
+  }, [userTireData, originalUserTireData]);
+
+  const confirmAndSave = async () => {
+    setConfirmModalOpen(false);
+    await handleSaveAndSync();
+  };
 
   return (
     <div className={styles.homePageContainer}>
@@ -311,6 +390,13 @@ const HomePage: React.FC = () => {
           {/* ✅ ลบปุ่มบันทึกใน Zone3 ออก */}
         </div>
       </div>
+
+      <ConfirmEditModal
+        open={confirmModalOpen}
+        rows={modalRows}
+        onClose={() => setConfirmModalOpen(false)}
+        onConfirm={confirmAndSave}
+      />
     </div>
   );
 };

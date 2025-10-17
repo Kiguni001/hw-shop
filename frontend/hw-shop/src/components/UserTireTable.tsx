@@ -1,5 +1,5 @@
 // src/components/UserTireTable.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styles from "../styles/UserTireTable.module.css";
 import SetPriceButton from "./SetPriceButton";
 
@@ -52,16 +52,15 @@ type Props = {
     value: number
   ) => void;
   className?: string;
-  resetEditFlagSignal?: number; // <-- เพิ่มตรงนี้
+  resetEditFlagSignal?: number;
 };
 
 const UserTireTable: React.FC<Props> = ({
   rows: initialRows,
-  validatePrice,
+  // validatePrice,
   onUpdateCell,
-  resetEditFlagSignal, // <-- เพิ่มตรงนี้
+  resetEditFlagSignal,
 }) => {
-  // ...existing code...
   const [rows, setRows] = useState<TireRow[]>([]);
 
   useEffect(() => {
@@ -71,13 +70,13 @@ const UserTireTable: React.FC<Props> = ({
       return idA - idB;
     });
     setRows(sortedRows);
-  }, [initialRows]); // <--- ตรงนี้สังเกตเฉพาะ initialRows
+  }, [initialRows]);
 
   useEffect(() => {
     setEditedFlags({});
     setEditedValues({});
-  }, [resetEditFlagSignal]); // <--- ตรงนี้ reset เฉพาะ flags/values
-  // ...existing code...
+  }, [resetEditFlagSignal]);
+
   const [editedValues, setEditedValues] = useState<{
     [key: string]: number | string;
   }>({});
@@ -105,7 +104,18 @@ const UserTireTable: React.FC<Props> = ({
     return `${idPart}-${rowIndex}-${field}`;
   };
 
-  const handleChange = (
+  const tempChange = (
+    row: TireRow,
+    rowIndex: number,
+    field: PriceKeys,
+    rawValue: string
+  ) => {
+    const cellKey = makeCellKey(row, rowIndex, field);
+    // เก็บค่าเฉพาะสำหรับการพิมพ์ (ยังไม่ถือว่า edited จริง)
+    setEditedValues((prev) => ({ ...prev, [cellKey]: rawValue }));
+  };
+
+  const commitChange = (
     row: TireRow,
     rowIndex: number,
     field: PriceKeys,
@@ -113,15 +123,33 @@ const UserTireTable: React.FC<Props> = ({
   ) => {
     const cellKey = makeCellKey(row, rowIndex, field);
 
-    setEditedValues((prev) => ({ ...prev, [cellKey]: rawValue }));
+    // แปลงเป็นตัวเลขและ cap ที่ 5000
+    let numValue = rawValue === "" ? 0 : Number(rawValue);
+    if (isNaN(numValue)) numValue = 0;
+    if (numValue > 5000) numValue = 5000;
 
-    const numValue = rawValue === "" ? 0 : Number(rawValue);
+    const original =
+      typeof row[field] === "number" ? Number(row[field] ?? 0) : 0;
 
-    if (!validatePrice(field, numValue)) {
-      setEditedFlags((prev) => ({ ...prev, [cellKey]: "invalid" }));
-    } else {
-      setEditedFlags((prev) => ({ ...prev, [cellKey]: "edited" }));
+    if (numValue === original) {
+      // ถ้าไม่เปลี่ยนแปลง ให้ลบ edited marker/editedValues
+      setEditedValues((prev) => {
+        const copy = { ...prev };
+        delete copy[cellKey];
+        return copy;
+      });
+      setEditedFlags((prev) => {
+        const copy = { ...prev };
+        delete copy[cellKey];
+        return copy;
+      });
+      // ไม่เรียก onUpdateCell, ไม่เปลี่ยน status
+      return;
     }
+
+    // ถ้าค่าเปลี่ยนจริง ให้บันทึกเป็น edited และอัพเดต rows + แจ้ง onUpdateCell
+    setEditedValues((prev) => ({ ...prev, [cellKey]: numValue }));
+    setEditedFlags((prev) => ({ ...prev, [cellKey]: "edited" }));
 
     setRows((prevRows) => {
       const updatedRows = prevRows.map((r) =>
@@ -148,26 +176,14 @@ const UserTireTable: React.FC<Props> = ({
     return row[field] ?? "";
   };
 
-  // const getEditedRows = (): TireRow[] => {
-  //   const editedRowIds = new Set<string>();
-  //   Object.entries(editedFlags).forEach(([key, flag]) => {
-  //     if (flag === "edited") {
-  //       const tcpsId = key.replace(/^-/, "").split("-")[0];
-  //       editedRowIds.add(tcpsId);
-  //     }
-  //   });
-  //   return rows.filter(
-  //     (r) => r.tcps_id && editedRowIds.has(r.tcps_id.replace(/^-/, ""))
-  //   );
-  // };
-
-  // ลบปุ่มบันทึกการเปลี่ยนแปลงและฟังก์ชัน handleSaveEditedRowsNew ออก
-  // ไม่กระทบฟังก์ชันอื่นที่ไม่เกี่ยวข้อง
   const [activeCell, setActiveCell] = useState<string | null>(null);
   const [activeCellRow, setActiveCellRow] = useState<TireRow | null>(null);
   const [activeCellField, setActiveCellField] = useState<PriceKeys | null>(
     null
   );
+
+  // ประกาศ ref ที่ระดับคอมโพเนนต์
+  const inputRefs = useRef<{ [cellKey: string]: HTMLInputElement | null }>({});
 
   return (
     <div className={styles.tableContainer}>
@@ -191,7 +207,6 @@ const UserTireTable: React.FC<Props> = ({
             <th>Trade-in</th>
           </tr>
         </thead>
-
         <tbody>
           {rows.length === 0 ? (
             <tr>
@@ -213,7 +228,6 @@ const UserTireTable: React.FC<Props> = ({
                 <td style={{ textAlign: "center", fontWeight: "bold" }}>
                   {rowIndex + 1}
                 </td>
-
                 <td style={{ textAlign: "left", paddingLeft: 12 }}>
                   {row.tcps_tb_name}
                 </td>
@@ -223,7 +237,6 @@ const UserTireTable: React.FC<Props> = ({
                 <td style={{ textAlign: "left", paddingLeft: 12 }}>
                   {row.tcps_sidewall_name}
                 </td>
-
                 {priceFields.map((field) => {
                   const cellKey = makeCellKey(row, rowIndex, field);
                   const flag = editedFlags[cellKey];
@@ -234,7 +247,6 @@ const UserTireTable: React.FC<Props> = ({
                       : flag === "edited"
                       ? styles.edited
                       : "" + (isActive ? " " + styles.activeCell : "");
-
                   return (
                     <td
                       key={cellKey}
@@ -243,13 +255,23 @@ const UserTireTable: React.FC<Props> = ({
                         setActiveCell(cellKey);
                         setActiveCellRow(row);
                         setActiveCellField(field);
+                        setTimeout(() => {
+                          const input = inputRefs.current[cellKey];
+                          if (input) {
+                            input.focus();
+                            const val = input.value;
+                            input.setSelectionRange(val.length, val.length);
+                          }
+                        }, 0);
                       }}
                     >
                       <input
-                        type="number"
+                        ref={(el) => {
+                          inputRefs.current[cellKey] = el;
+                        }}
                         value={getDisplayedValue(row, rowIndex, field)}
                         onChange={(e) =>
-                          handleChange(row, rowIndex, field, e.target.value)
+                          tempChange(row, rowIndex, field, e.target.value)
                         }
                         className={styles.inputCell}
                         onFocus={() => {
@@ -257,7 +279,32 @@ const UserTireTable: React.FC<Props> = ({
                           setActiveCellRow(row);
                           setActiveCellField(field);
                         }}
-                        onBlur={() => setActiveCell(null)}
+                        onBlur={() => {
+                          // finalize: ใช้ค่าจาก input ถ้ามี ref, ถ้าไม่มีใช้ editedValues หรือค่าเดิม
+                          const input = inputRefs.current[cellKey];
+                          const raw =
+                            input?.value ??
+                            String(
+                              editedValues[makeCellKey(row, rowIndex, field)] ??
+                                row[field] ??
+                                ""
+                            );
+                          commitChange(row, rowIndex, field, raw);
+                          setActiveCell(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            (e.currentTarget as HTMLInputElement).blur();
+                          }
+                        }}
+                        onDoubleClick={(e) => {
+                          e.preventDefault();
+                          const val = e.currentTarget.value;
+                          e.currentTarget.setSelectionRange(
+                            val.length,
+                            val.length
+                          );
+                        }}
                       />
                     </td>
                   );
@@ -267,31 +314,32 @@ const UserTireTable: React.FC<Props> = ({
           )}
         </tbody>
       </table>
-
       {activeCell && activeCellRow && activeCellField && (
         <SetPriceButton
           row={activeCellRow}
-          // field={activeCellField}
-          // value={activeCellRow[activeCellField] ?? ""}
           onRound100={() => {
-            // ปัดเต็มร้อย
+            const rowIndex = rows.findIndex(
+              (r) => r.tcps_id === activeCellRow.tcps_id
+            );
             const newValue =
               Math.ceil(Number(activeCellRow[activeCellField] ?? 0) / 100) *
               100;
-            handleChange(
+            commitChange(
               activeCellRow,
-              rows.findIndex((r) => r.tcps_id === activeCellRow.tcps_id),
+              rowIndex,
               activeCellField,
               String(newValue)
             );
           }}
           onRound50={() => {
-            // ปัดเต็มห้าสิบ
+            const rowIndex = rows.findIndex(
+              (r) => r.tcps_id === activeCellRow.tcps_id
+            );
             const val = Number(activeCellRow[activeCellField] ?? 0);
             const newValue = Math.ceil(val / 50) * 50;
-            handleChange(
+            commitChange(
               activeCellRow,
-              rows.findIndex((r) => r.tcps_id === activeCellRow.tcps_id),
+              rowIndex,
               activeCellField,
               String(newValue)
             );
